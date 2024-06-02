@@ -169,10 +169,10 @@ public class WopiDiscovery {
 		return applications;
 	}
 
-	class DiscoveryApp {
+	public static class DiscoveryApp {
 		private String name;
 		private String favIconUrl;
-		private List<DiscoveryAction> actions = new ArrayList<>();
+		private final List<DiscoveryAction> actions = new ArrayList<>();
 
 		@Override
 		public String toString() {
@@ -188,7 +188,7 @@ public class WopiDiscovery {
 		}
 	}
 
-	class DiscoveryAction {
+	public static class DiscoveryAction {
 		private String ext;
 		private String name;
 		private String urlsrc;
