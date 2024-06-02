@@ -75,7 +75,17 @@ public class WopiDiscovery {
 	 * @deprecated You should use wopiDiscovery.getAction
 	 */
 	public String getSrcURL(String mimeType, String action) {
-		DiscoveryAction discoveryAction = this.legacyActions.get(String.format("%s/%s", mimeType, action));
+		if (action == null) {
+			logger.warn("get srcURL for null action");
+			return null;
+		}
+		if (mimeType == null) {
+			logger.warn("get srcURL for null mimeType");
+			return null;
+		}
+
+		DiscoveryAction discoveryAction = this.legacyActions.get(
+				String.format("%s/%s", mimeType.toLowerCase(), action.toLowerCase()));
 		if (discoveryAction == null) {
 			return null;
 		}
@@ -87,7 +97,11 @@ public class WopiDiscovery {
 	}
 
 	public List<DiscoveryAction> getAction(String extension) {
-		return this.actions.get(extension);
+		if (extension == null) {
+			logger.warn("get action for null extension");
+			return Collections.emptyList();
+		}
+		return this.actions.get(extension.toLowerCase());
 	}
 
 	/**

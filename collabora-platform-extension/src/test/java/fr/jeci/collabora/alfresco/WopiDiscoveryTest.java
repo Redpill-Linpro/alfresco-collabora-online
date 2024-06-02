@@ -55,7 +55,7 @@ public class WopiDiscoveryTest {
 		assertEquals("edit", action.get(0).getName());
 		assertEquals("ods", action.get(0).getExt());
 
-		action = wopiDiscovery.getAction("pdf");
+		action = wopiDiscovery.getAction("PDF");
 		assertFalse(action.isEmpty());
 		assertEquals("http://localhost:9980/loleaflet/1430151/loleaflet.html?", action.get(0).getUrlsrc());
 		assertEquals("view_comment", action.get(0).getName());
