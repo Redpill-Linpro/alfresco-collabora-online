@@ -81,18 +81,16 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 	}
 
 	/**
-	 * This holds a map of the the "token info(s)" mapped to a file. Each token info
-	 * is mapped to a user, so in essence a user may only have one token info per
-	 * file. <FileId, <userName, tokenInfo> >
+	 * This holds a map of the "token info(s)" mapped to a file. Each token info is mapped to a user, so in essence a
+	 * user may only have one token info per file. <FileId, <userName, tokenInfo> >
 	 * <p>
-	 * { fileId: { <== The id of the nodeRef that refers to the file userName:
-	 * WOPIAccessTokenInfo } }
-	 *
+	 * { fileId: { <== The id of the nodeRef that refers to the file userName: WOPIAccessTokenInfo } }
+	 * <p>
 	 *
 	 * fileIdAccessTokenMap is an Hazelcast IMap see:
-	 * https://docs.hazelcast.org/docs/2.4/javadoc/com/hazelcast/core/IMap.html The
-	 * get(Object key) method returns a clone of original value, modifying the
-	 * returned value does not change the actual value in the map. One should put
+	 * <a href="https://docs.hazelcast.org/docs/2.4/javadoc/com/hazelcast/core/IMap.html">...</a> The get(Object key)
+	 * method returns a
+	 * clone of original value, modifying the returned value does not change the actual value in the map. One should put
 	 * modified value back to make changes visible to all nodes.
 	 */
 	private SimpleCache<String, WOPIAccessTokenInfo> tokenMap;
@@ -102,13 +100,9 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 	}
 
 	/**
-	 * Generate and store an access token only valid for the current user/file id
-	 * combination.
-	 *
+	 * Generate and store an access token only valid for the current user/file id combination.
+	 * <p>
 	 * We check if we have at least READ permission, so a user must be connected.
-	 * 
-	 * @param nodeRef
-	 * @return
 	 */
 	@Override
 	public WOPIAccessTokenInfo createAccessToken(NodeRef nodeRef) {
@@ -136,7 +130,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 	/**
 	 * Compute token time to live
-	 * 
+	 *
 	 * @return Now + tokenTtlMs
 	 */
 	private LocalDateTime newExpiresAt(final LocalDateTime now) {
@@ -150,20 +144,14 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 	/**
 	 * Generates a random access token.
-	 * 
-	 * @return
 	 */
 	private String generateAccessToken() {
 		return new BigInteger(130, random).toString(32);
 	}
 
 	/**
-	 * Check the access token given in the request and return the nodeRef
-	 * corresponding to the file id passed to the request.
-	 *
-	 * @param req
-	 * @throws WebScriptException
-	 * @return
+	 * Check the access token given in the request and return the nodeRef corresponding to the file id passed to the
+	 * request.
 	 */
 	@Override
 	public WOPIAccessTokenInfo checkAccessToken(final String accessToken, final NodeRef nodeRef) {
@@ -203,7 +191,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 			this.serverInfo.put(USER_CAN_NOT_WRITE_RELATIVE, FALSE);
 			this.serverInfo.put(POST_MESSAGE_ORIGIN, this.alfrescoPublicURL.toString());
 			this.serverInfo.put(SUPPORTS_LOCKS, TRUE);
-			
+
 			// Host from which token generation request originated
 			// Search https://www.collaboraoffice.com/category/community-en/ for
 			// EnableOwnerTermination
@@ -217,11 +205,10 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 	/**
 	 * Returns the WOPI src URL for a given nodeRef and action.
-	 * 
-	 * https://wopi.readthedocs.io/en/latest/discovery.html#wopi-actions
+	 * <p>
+	 * <a href="https://wopi.readthedocs.io/en/latest/discovery.html#wopi-actions">...</a>
 	 *
-	 * @param nodeRef
-	 * @param action  "view", "edit", etc.
+	 * @param action "view", "edit", etc.
 	 */
 	@Override
 	public String getWopiSrcURL(NodeRef nodeRef, String action) throws IOException {
@@ -399,10 +386,8 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 	/**
 	 * Public fqdn use by the browser to load leaflet
-	 * 
-	 * collabora.public.url=https://___/
-	 * 
-	 * @param collaboraPublicUrl
+	 * <p>
+	 * <code>collabora.public.url=https://___/</code>
 	 */
 	public void setCollaboraPublicUrl(URL collaboraPublicUrl) {
 		this.collaboraPublicUrl = collaboraPublicUrl;

@@ -3,9 +3,9 @@ package fr.jeci.collabora.alfresco;
 /**
  * Specific exception use to implement wopi "409" error. Mainly for Lock
  * problem.
- * 
- * http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.10
- * 
+ * <p>
+ * <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.10">...</a>
+ *
  * @author jlesage
  *
  */

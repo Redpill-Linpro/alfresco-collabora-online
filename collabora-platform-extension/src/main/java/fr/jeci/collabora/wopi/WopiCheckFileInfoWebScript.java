@@ -36,9 +36,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * https://msdn.microsoft.com/en-us/library/hh622920(v=office.12).aspx search for "optional": false to see mandatory
+ * <a href="https://msdn.microsoft.com/en-us/library/hh622920(v=office.12).aspx">...</a> search for "optional": false to
+ * see mandatory
  * parameters. (As of 29/11/2016 when this was modified, SHA is no longer needed) Also return all values defined here:
- * https://github.com/LibreOffice/online/blob/3ce8c3158a6b9375d4b8ca862ea5b50490af4c35/wsd/Storage.cpp#L403 because LOOL
+ * <a
+ * href="https://github.com/LibreOffice/online/blob/3ce8c3158a6b9375d4b8ca862ea5b50490af4c35/wsd/Storage.cpp#L403">...</a>
+ * because LOOL
  * uses them internally to determine permission on rendering of certain elements. Well I assume given the variable
  * name(s), one should be able to semantically derive their relevance
  */

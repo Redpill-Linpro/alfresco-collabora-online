@@ -276,7 +276,7 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 	 * type and properties (like a copy).
 	 *
 	 * @param isRelative     false, return null if the node can't be created. If
-	 *                       true, it's depends of overwrite parameter
+	 *                       true, it's depends on overwrite parameter
 	 * @param overwrite      if the target node already exist and overwrite is true,
 	 *                       the target noderef node is return, else throw an
 	 *                       exception

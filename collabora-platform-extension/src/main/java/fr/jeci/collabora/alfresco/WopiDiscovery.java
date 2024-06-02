@@ -77,12 +77,8 @@ public class WopiDiscovery {
 
 	/**
 	 * Return the srcurl for a given mimetype and action..
-	 * 
-	 * @deprecated
-	 * 
-	 * @param mimeType
-	 * @param action
-	 * @return
+	 *
+	 * @deprecated You should use wopiDiscovery.getAction
 	 */
 	public String getSrcURL(String mimeType, String action) {
 		DiscoveryAction discoveryAction = this.legacyActions.get(String.format("%s/%s", mimeType, action));
@@ -99,9 +95,6 @@ public class WopiDiscovery {
 
 	/**
 	 * Load discovery.xml from Collabora Online server
-	 * 
-	 * @throws XMLStreamException
-	 * @throws IOException
 	 */
 	protected void loadDiscoveryXML(InputStream in) throws XMLStreamException {
 		if (this.discoveryDoc != null) {

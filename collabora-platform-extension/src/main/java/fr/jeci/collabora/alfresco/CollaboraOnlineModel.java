@@ -4,9 +4,8 @@ import org.alfresco.service.namespace.QName;
 
 /**
  * Content Model Constants
- * 
- * @author jlesage
  *
+ * @author jlesage
  * @Deprecated We use LockService now
  */
 public interface CollaboraOnlineModel {

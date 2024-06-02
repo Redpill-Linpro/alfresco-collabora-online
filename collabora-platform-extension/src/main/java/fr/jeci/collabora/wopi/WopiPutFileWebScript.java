@@ -38,12 +38,11 @@ import java.util.Map;
 
 /**
  * Put the binary content into Alfresco.
- * 
+ * <p>
  * The X-LOOL-WOPI-Timestamp is compare with PROP_FROZEN_MODIFIED or PROP_CREATED_DATE from the current version of the
  * target file.
- * 
- * @author jlesage
  *
+ * @author jlesage
  */
 public class WopiPutFileWebScript extends AbstractWopiWebScript {
 	private static final Log logger = LogFactory.getLog(WopiPutFileWebScript.class);
@@ -127,11 +126,6 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 	/**
 	 * Check the creation/modification date for current version. No check is there is no version, because the cm:modified
 	 * is change for any change of a properties.
-	 * 
-	 * @param req
-	 * @param res
-	 * @param nodeRef
-	 * @throws IOException
 	 */
 	private void checkWopiTimestamp(final WebScriptRequest req, final WebScriptResponse res, final NodeRef nodeRef)
 			throws IOException {
@@ -156,7 +150,7 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 
 	/**
 	 * Check if X-LOOL-WOPI-Timestamp is equal to PROP_FROZEN_MODIFIED
-	 * 
+	 *
 	 * @param hdrTimestamp "X-LOOL-WOPI-Timestamp"
 	 * @param modified     PROP_FROZEN_MODIFIED
 	 * @return true if timestamps are equal

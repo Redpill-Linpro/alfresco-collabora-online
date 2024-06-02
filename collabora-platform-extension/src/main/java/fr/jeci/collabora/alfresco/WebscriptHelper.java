@@ -30,11 +30,6 @@ public class WebscriptHelper {
 
 	/**
 	 * Get Mandatory parameters from Map
-	 * 
-	 * @param templateArgs
-	 * @param header
-	 * @return
-	 * @throws WebScriptException
 	 */
 	public static String getParam(Map<String, String> templateArgs, String header) throws WebScriptException {
 		String value = templateArgs.get(header);
@@ -44,10 +39,9 @@ public class WebscriptHelper {
 
 	/**
 	 * Assert param is not null or empty
-	 * 
+	 *
 	 * @param header Need only for log
 	 * @param param  value tested
-	 * @throws WebScriptException
 	 */
 	public static void assertParam(String header, String param) throws WebScriptException {
 		if (StringUtils.isBlank(param)) {
@@ -56,36 +50,25 @@ public class WebscriptHelper {
 	}
 
 	/**
-	 * Get parameter as Interger (Not Mandatory)
-	 * 
-	 * @param templateArgs
-	 * @param header
-	 * @return interger or null
-	 * @throws WebScriptException
+	 * Get parameter as Integer (Not Mandatory)
+	 *
+	 * @return integer or null
 	 */
 	public static Integer intergerValue(Map<String, String> templateArgs, String header) throws WebScriptException {
 		return intergerValue(templateArgs.get(header), header);
 	}
 
 	/**
-	 * Get parameter as Interger (Not Mandatory)
-	 * 
-	 * @param req
-	 * @param header
-	 * @return
-	 * @throws WebScriptException
+	 * Get parameter as Integer (Not Mandatory)
 	 */
 	public static Integer intergerValue(WebScriptRequest req, String header) throws WebScriptException {
 		return intergerValue(req.getParameter(header), header);
 	}
 
 	/**
-	 * Get parameter as Interger (Not Mandatory)
-	 * 
-	 * @param strVal
+	 * Get parameter as Integer (Not Mandatory)
+	 *
 	 * @param header Need only for log
-	 * @return
-	 * @throws WebScriptException
 	 */
 	public static Integer intergerValue(String strVal, String header) throws WebScriptException {
 		if (strVal == null) {

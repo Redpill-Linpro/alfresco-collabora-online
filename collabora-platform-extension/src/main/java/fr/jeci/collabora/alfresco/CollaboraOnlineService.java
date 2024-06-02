@@ -39,11 +39,10 @@ public interface CollaboraOnlineService {
 	static final String AUTOSAVE_DESCRIPTION = "Edit with Collabora";
 
 	/**
-	 * Generate and store an access token only valid for the current user/file id
-	 * combination.
+	 * Generate and store an access token only valid for the current user/file id combination.
 	 * <p>
-	 * If an existing access token exists for the user/file id combination, then
-	 * extend its expiration date and return it.
+	 * If an existing access token exists for the user/file id combination, then extend its expiration date and return
+	 * it.
 	 *
 	 * @param nodeRef Node to lock
 	 * @return Access Token
@@ -54,8 +53,7 @@ public interface CollaboraOnlineService {
 	 * Check if access token is valid and match nodeRef
 	 *
 	 * @param accessToken Current Access Token
-	 * @param nodeRef Node to lock
-	 * @throws WebScriptException
+	 * @param nodeRef     Node to lock
 	 * @return Access Token
 	 */
 	WOPIAccessTokenInfo checkAccessToken(final String accessToken, final NodeRef nodeRef);
@@ -64,9 +62,7 @@ public interface CollaboraOnlineService {
 	 * Returns the WOPI src URL for a given nodeRef and action.
 	 *
 	 * @param nodeRef Node to lock
-	 * @param action
 	 * @return WOPI src URL
-	 * @throws IOException
 	 */
 	String getWopiSrcURL(NodeRef nodeRef, String action) throws IOException;
 
@@ -105,7 +101,7 @@ public interface CollaboraOnlineService {
 	 * <a href="https://wopi.readthedocs.io/projects/wopirest/en/latest/files/RefreshLock.html">...</a>
 	 *
 	 * @param nodeRef Node to lock
-	 * @param lockId current lock-id
+	 * @param lockId  current lock-id
 	 */
 	void lockRefresh(NodeRef nodeRef, String lockId) throws ConflictException;
 
@@ -113,19 +109,17 @@ public interface CollaboraOnlineService {
 	 * <a href="https://wopi.readthedocs.io/projects/wopirest/en/latest/files/Unlock.html">...</a>
 	 *
 	 * @param nodeRef Node to lock
-	 * @param lockId current lock-id
+	 * @param lockId  current lock-id
 	 * @return current lock-id
 	 */
 	String lockUnlock(NodeRef nodeRef, String lockId) throws ConflictException;
 
 	/**
-	 * Remove lock without checking the current lockId but timestamp. (Use to clean
-	 * old LOCK)
-	 * 
-	 * @deprecated
+	 * Remove lock without checking the current lockId but timestamp. (Use to clean old LOCK)
 	 *
 	 * @param nodeRef Node to lock
 	 * @param force   if true, remove lock without checking timestamp
+	 * @deprecated
 	 */
 	void unlock(NodeRef nodeRef, boolean force);
 
