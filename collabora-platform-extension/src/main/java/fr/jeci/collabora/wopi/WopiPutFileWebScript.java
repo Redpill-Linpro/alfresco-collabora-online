@@ -161,15 +161,12 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 			// Ignore if no X-LOOL-WOPI-Timestamp
 			return true;
 		}
-		LocalDateTime loolTimestamp = null;
+		LocalDateTime loolTimestamp;
 		try {
 			// 2011-02-24T16:16:37.300000Z or 2022-04-08T08:29:01.355
 			loolTimestamp = LocalDateTime.parse(hdrTimestamp, ISODateTimeFormat.dateTimeParser());
 		} catch (DateTimeException | IllegalArgumentException e) {
 			logger.error("checkTimestamp Error : " + e.getMessage());
-		}
-
-		if (loolTimestamp == null) {
 			return false;
 		}
 
