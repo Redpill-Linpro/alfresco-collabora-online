@@ -76,6 +76,9 @@ public class WopiDiscovery {
 	 */
 	public String getSrcURL(String mimeType, String action) {
 		DiscoveryAction discoveryAction = this.legacyActions.get(String.format("%s/%s", mimeType, action));
+		if (discoveryAction == null) {
+			return null;
+		}
 		return discoveryAction.urlsrc;
 	}
 
