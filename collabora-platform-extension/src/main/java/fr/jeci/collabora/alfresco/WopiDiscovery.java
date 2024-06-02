@@ -98,8 +98,12 @@ public class WopiDiscovery {
 			return;
 		}
 
-		XMLInputFactory factory = XMLInputFactory.newInstance();
+		final XMLInputFactory factory = XMLInputFactory.newInstance();
 		factory.setProperty(XMLInputFactory.IS_COALESCING, true);
+		// Security - Disable DOCTYPE declarations (Prevent XML External Entity (XXE) attack)
+		factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+		// Security -  Disable external entity declarations  (Prevent XML External Entity (XXE) attack)
+		factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
 
 		XMLStreamReader xr = factory.createXMLStreamReader(in);
 
