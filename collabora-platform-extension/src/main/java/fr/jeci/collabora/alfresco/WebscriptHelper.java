@@ -54,15 +54,15 @@ public class WebscriptHelper {
 	 *
 	 * @return integer or null
 	 */
-	public static Integer intergerValue(Map<String, String> templateArgs, String header) throws WebScriptException {
-		return intergerValue(templateArgs.get(header), header);
+	public static Integer integerValue(Map<String, String> templateArgs, String header) throws WebScriptException {
+		return integerValue(templateArgs.get(header), header);
 	}
 
 	/**
 	 * Get parameter as Integer (Not Mandatory)
 	 */
-	public static Integer intergerValue(WebScriptRequest req, String header) throws WebScriptException {
-		return intergerValue(req.getParameter(header), header);
+	public static Integer integerValue(WebScriptRequest req, String header) throws WebScriptException {
+		return integerValue(req.getParameter(header), header);
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class WebscriptHelper {
 	 *
 	 * @param header Need only for log
 	 */
-	public static Integer intergerValue(String strVal, String header) throws WebScriptException {
+	public static Integer integerValue(String strVal, String header) throws WebScriptException {
 		if (strVal == null) {
 			return null;
 		}

@@ -64,7 +64,7 @@ public class CleanVersionWebScript extends DeclarativeWebScript {
 			}
 
 			// Number automatique version to keep
-			Integer keepAuto = WebscriptHelper.intergerValue(req, PARAM_KEEP_AUTO);
+			Integer keepAuto = WebscriptHelper.integerValue(req, PARAM_KEEP_AUTO);
 			keepAuto = keepAuto == null ? -1 : keepAuto;
 
 			if (logger.isDebugEnabled()) {
@@ -72,7 +72,7 @@ public class CleanVersionWebScript extends DeclarativeWebScript {
 			}
 
 			// Number explicit version to keep
-			Integer keepExp = WebscriptHelper.intergerValue(req, PARAM_KEEP_EXP);
+			Integer keepExp = WebscriptHelper.integerValue(req, PARAM_KEEP_EXP);
 			keepExp = keepExp == null ? -1 : keepExp;
 
 			if (logger.isDebugEnabled()) {
