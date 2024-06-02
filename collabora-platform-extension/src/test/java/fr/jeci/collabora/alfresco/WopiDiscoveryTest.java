@@ -1,19 +1,17 @@
 package fr.jeci.collabora.alfresco;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import fr.jeci.collabora.alfresco.WopiDiscovery.DiscoveryAction;
+import org.junit.Before;
+import org.junit.Test;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
-import javax.xml.stream.XMLStreamException;
-
-import org.junit.Before;
-import org.junit.Test;
-
-import fr.jeci.collabora.alfresco.WopiDiscovery.DiscoveryAction;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class WopiDiscoveryTest {
 	WopiDiscovery wopiDiscovery = null;
@@ -28,6 +26,7 @@ public class WopiDiscoveryTest {
 		File discoveryFile = new File("src/test/resources/discovery_collabora_online.xml");
 		FileInputStream in = new FileInputStream(discoveryFile);
 		wopiDiscovery.loadDiscoveryXML(in);
+		assertFalse(wopiDiscovery.getActions().isEmpty());
 	}
 
 	@Test
@@ -40,6 +39,8 @@ public class WopiDiscoveryTest {
 
 		assertEquals("http://localhost:9980/loleaflet/1430151/loleaflet.html?", urlsrc);
 
+		urlsrc = wopiDiscovery.getSrcURL("application/pdf", "view_comment");
+		assertEquals("http://localhost:9980/loleaflet/1430151/loleaflet.html?", urlsrc);
 	}
 
 	@Test
@@ -54,6 +55,11 @@ public class WopiDiscoveryTest {
 		assertEquals("edit", action.get(0).getName());
 		assertEquals("ods", action.get(0).getExt());
 
+		action = wopiDiscovery.getAction("pdf");
+		assertFalse(action.isEmpty());
+		assertEquals("http://localhost:9980/loleaflet/1430151/loleaflet.html?", action.get(0).getUrlsrc());
+		assertEquals("view_comment", action.get(0).getName());
+		assertEquals("pdf", action.get(0).getExt());
 	}
 
 }
