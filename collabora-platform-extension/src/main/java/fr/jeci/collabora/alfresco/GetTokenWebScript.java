@@ -16,18 +16,14 @@ limitations under the License.
 */
 package fr.jeci.collabora.alfresco;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.extensions.webscripts.Cache;
-import org.springframework.extensions.webscripts.DeclarativeWebScript;
-import org.springframework.extensions.webscripts.Status;
-import org.springframework.extensions.webscripts.WebScriptException;
-import org.springframework.extensions.webscripts.WebScriptRequest;
+import org.springframework.extensions.webscripts.*;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class GetTokenWebScript extends DeclarativeWebScript {
 	private static final Log logger = LogFactory.getLog(GetTokenWebScript.class);

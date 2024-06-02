@@ -62,7 +62,7 @@ public class WopiGetFileWebScript extends AbstractWopiWebScript {
 			}
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
-			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR, "Failed to copy contetn stream", e);
+			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR, "Failed to copy content stream", e);
 		}
 	}
 }

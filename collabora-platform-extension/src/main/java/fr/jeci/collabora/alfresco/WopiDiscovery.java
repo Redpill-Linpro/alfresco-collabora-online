@@ -16,29 +16,23 @@ limitations under the License.
 */
 package fr.jeci.collabora.alfresco;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.w3c.dom.Document;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Load and parse the WopiDiscovery.xml file from Collabora Online
- * 
  */
 public class WopiDiscovery {
 	private static final Log logger = LogFactory.getLog(WopiDiscovery.class);
@@ -63,7 +57,7 @@ public class WopiDiscovery {
 			loadDiscoveryXML(openConnection.getInputStream());
 			this.hasCollaboraOnline.set(true);
 		} catch (IOException | XMLStreamException e) {
-			logger.warn("Can't load Wopi Discovery URI : " + this.collaboraPrivateUrl + "/" + DEFAULT_HOSTING_DISCOVERY);
+			logger.warn("Can’t load Wopi Discovery URI : " + this.collaboraPrivateUrl + "/" + DEFAULT_HOSTING_DISCOVERY);
 		}
 	}
 
@@ -208,12 +202,7 @@ public class WopiDiscovery {
 
 		@Override
 		public String toString() {
-			StringBuilder sb = new StringBuilder("{");
-			sb.append("\n\tname: \"").append(name).append("\", ");
-			sb.append("\n\text: \"").append(ext).append("\", ");
-			sb.append("\n\turlsrc: \"").append(urlsrc).append("\"\n\t}");
-
-			return sb.toString();
+			return String.format("{%n\tname: \"%s\", %n\text: \"%s\", %n\turlsrc: \"%s\"%n\t}", name, ext, urlsrc);
 		}
 
 		public String getExt() {

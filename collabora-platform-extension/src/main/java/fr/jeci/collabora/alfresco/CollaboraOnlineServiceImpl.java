@@ -47,9 +47,9 @@ import java.util.Map;
 
 public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
-	private static final String CANT_LOCK = "Can't lock node %s, ";
-	private static final String CANT_UNLOCK = "Can't unlock node %s, ";
-	private static final String CANT_REFRESH = "Can't refresh node %s, ";
+	private static final String CANT_LOCK = "Can’t lock node %s, ";
+	private static final String CANT_UNLOCK = "Can’t unlock node %s, ";
+	private static final String CANT_REFRESH = "Can’t refresh node %s, ";
 	private static final String LOCK_ID_IS_BLANK = "lockId is blank";
 	private static final String NODE_NOT_LOCK = "node is not lock";
 	private static final String EMPTY_STRING = "";

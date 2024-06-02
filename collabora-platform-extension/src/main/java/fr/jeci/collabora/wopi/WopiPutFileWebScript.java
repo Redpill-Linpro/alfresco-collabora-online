@@ -86,8 +86,9 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR, msg);
 		} catch (ConflictException e) {
 			if (logger.isDebugEnabled()) {
-				logger.debug("ConflictException " + X_WOPI_LOCK + "=" + e.getCurrentLockId() + ";"
-						+ X_WOPI_LOCK_FAILURE_REASON + "=" + e.getLockFailureReason());
+				logger.debug(
+						"ConflictException " + X_WOPI_LOCK + "=" + e.getCurrentLockId() + ";" + X_WOPI_LOCK_FAILURE_REASON
+								+ "=" + e.getLockFailureReason());
 			}
 
 			res.setHeader(X_WOPI_LOCK, e.getCurrentLockId());
@@ -95,7 +96,6 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 			jsonResponse(res, STATUS_CONFLICT, e.getLockFailureReason());
 		}
 	}
-
 
 	private void putLastModifiedTime(final NodeRef nodeRef, final Version newVersion, final Map<String, String> model) {
 

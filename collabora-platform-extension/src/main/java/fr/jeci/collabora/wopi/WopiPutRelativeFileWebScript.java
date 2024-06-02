@@ -349,7 +349,7 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 
 		if (isSuggested && isRelative) {
 			throw new WebScriptException(Status.STATUS_BAD_REQUEST,
-					"Can't have both " + X_WOPI_SUGGESTED_TARGET + " and " + X_WOPI_RELATIVE_TARGET + " header");
+					"Can’t have both " + X_WOPI_SUGGESTED_TARGET + " and " + X_WOPI_RELATIVE_TARGET + " header");
 		}
 		if (!isSuggested && !isRelative) {
 			throw new WebScriptException(Status.STATUS_BAD_REQUEST,
