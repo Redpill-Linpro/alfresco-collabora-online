@@ -31,9 +31,9 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.joda.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.extensions.webscripts.Status;
 import org.springframework.extensions.webscripts.WebScriptException;
 
@@ -56,7 +56,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 	private static final String FALSE = "false";
 	private static final String TRUE = "true";
 
-	private static final Log logger = LogFactory.getLog(CollaboraOnlineServiceImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(CollaboraOnlineServiceImpl.class);
 
 	private static final int ONE_HOUR_MS = 1000 * 60 * 60;
 
@@ -89,9 +89,8 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 	 *
 	 * fileIdAccessTokenMap is an Hazelcast IMap see:
 	 * <a href="https://docs.hazelcast.org/docs/2.4/javadoc/com/hazelcast/core/IMap.html">...</a> The get(Object key)
-	 * method returns a
-	 * clone of original value, modifying the returned value does not change the actual value in the map. One should put
-	 * modified value back to make changes visible to all nodes.
+	 * method returns a clone of original value, modifying the returned value does not change the actual value in the
+	 * map. One should put modified value back to make changes visible to all nodes.
 	 */
 	private SimpleCache<String, WOPIAccessTokenInfo> tokenMap;
 
@@ -122,9 +121,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 				userName);
 		this.tokenMap.put(tokenInfo.getAccessToken(), tokenInfo);
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("Created Access Token for user '" + userName + "' and nodeRef '" + nodeRef + "'");
-		}
+		logger.debug("Created Access Token for user '{}' and nodeRef '{}'", userName, nodeRef);
 		return tokenInfo;
 	}
 
@@ -137,7 +134,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 		if (this.tokenTtlMs < 1) {
 			this.tokenTtlMs = DEFAULT_TOKEN_TTL_MS;
 		} else if (this.tokenTtlMs < ONE_HOUR_MS) {
-			logger.warn("Token TTL is short : " + this.tokenTtlMs + " ms");
+			logger.warn("Token TTL is short : {} ms", this.tokenTtlMs);
 		}
 		return now.plusMillis(this.tokenTtlMs);
 	}
@@ -223,7 +220,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 		int lastDot = filename.lastIndexOf('.');
 		if (lastDot < 0) {
-			logger.warn("This node has no extension: " + nodeRef + " fileName=" + filename + " use mimeType (legacy)");
+			logger.warn("This node has no extension: {} fileName={} use mimeType (legacy)", nodeRef, filename);
 			final ContentData contentData = (ContentData) nodeService.getProperty(nodeRef, ContentModel.PROP_CONTENT);
 			return this.wopiDiscovery.getSrcURL(contentData.getMimetype(), action);
 		}
@@ -244,7 +241,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 		}
 
 		if (found == null) {
-			logger.warn("Action name not found for action=" + action + " fileName=" + filename);
+			logger.warn("Action name not found for action={} fileName={}", action, filename);
 			found = actions.get(0);
 		}
 
@@ -253,9 +250,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 	@Override
 	public String lock(NodeRef nodeRef, String lockId) throws ConflictException {
-		if (logger.isDebugEnabled()) {
-			logger.debug("LOCK '" + nodeRef + "'");
-		}
+		logger.debug("LOCK '{}'", nodeRef);
 
 		if (StringUtils.isBlank(lockId)) {
 			String lockFailureReason = String.format(CANT_LOCK + LOCK_ID_IS_BLANK, nodeRef);
@@ -269,9 +264,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 	@Override
 	public String lockGet(NodeRef nodeRef) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("GET LOCK '" + nodeRef + "'");
-		}
+		logger.debug("GET LOCK '{}'", nodeRef);
 
 		if (isNodeLock(nodeRef)) {
 			LockState lockState = this.lockService.getLockState(nodeRef);
@@ -283,9 +276,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 	@Override
 	public void lockRefresh(NodeRef nodeRef, String lockId) throws ConflictException {
-		if (logger.isDebugEnabled()) {
-			logger.debug("REFRESH LOCK '" + nodeRef + "'");
-		}
+		logger.debug("REFRESH LOCK '{}'", nodeRef);
 
 		if (StringUtils.isBlank(lockId)) {
 			String lockFailureReason = String.format(CANT_REFRESH + LOCK_ID_IS_BLANK, nodeRef);
@@ -302,9 +293,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 	@Override
 	public String lockUnlock(NodeRef nodeRef, String lockId) throws ConflictException {
-		if (logger.isDebugEnabled()) {
-			logger.debug("UNLOCK '" + nodeRef + "'");
-		}
+		logger.debug("UNLOCK '{}'", nodeRef);
 
 		if (StringUtils.isBlank(lockId)) {
 			String lockFailureReason = String.format(CANT_UNLOCK + LOCK_ID_IS_BLANK, nodeRef);
@@ -324,15 +313,11 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 	@Override
 	public void lockSteal(NodeRef nodeRef, String lockId) throws ConflictException {
-		if (logger.isDebugEnabled()) {
-			logger.debug("STEAL LOCK '" + nodeRef + "'");
-		}
+		logger.debug("STEAL LOCK '{}'", nodeRef);
 
 		String cLockId = this.lockGet(nodeRef);
 		if (StringUtils.isBlank(cLockId)) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("No lock-id on " + nodeRef + ". No steal");
-			}
+			logger.debug("No lock-id on {}. No steal", nodeRef);
 			return;
 		}
 
@@ -358,9 +343,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 	@Override
 	public void unlock(NodeRef nodeRef, boolean force) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("UNLOCK '" + nodeRef + "'");
-		}
+		logger.debug("UNLOCK '{}'", nodeRef);
 
 		this.lockService.unlock(nodeRef);
 	}
@@ -368,9 +351,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 	private boolean isNodeLock(NodeRef nodeRef) {
 		if (this.nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE)) {
 			LockType lockType = this.lockService.getLockType(nodeRef);
-			if (logger.isDebugEnabled()) {
-				logger.debug("Node is lock type=" + lockType);
-			}
+			logger.debug("Node is lock type={}", lockType);
 			return LockType.WRITE_LOCK.equals(lockType);
 		}
 

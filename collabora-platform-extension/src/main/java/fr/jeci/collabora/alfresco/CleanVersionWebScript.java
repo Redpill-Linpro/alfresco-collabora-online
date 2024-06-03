@@ -16,29 +16,28 @@ limitations under the License.
 */
 package fr.jeci.collabora.alfresco;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.version.Version;
 import org.alfresco.service.cmr.version.VersionHistory;
 import org.alfresco.service.cmr.version.VersionService;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.extensions.webscripts.Cache;
 import org.springframework.extensions.webscripts.DeclarativeWebScript;
 import org.springframework.extensions.webscripts.Status;
 import org.springframework.extensions.webscripts.WebScriptRequest;
 
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Remove automatic and explicit versions.
- * 
- * @author Jeremie Lesage
  *
+ * @author Jeremie Lesage
  */
 public class CleanVersionWebScript extends DeclarativeWebScript {
-	private static final Log logger = LogFactory.getLog(CleanVersionWebScript.class);
+	private static final Logger logger = LoggerFactory.getLogger(CleanVersionWebScript.class);
 
 	private static final String PARAM_STORE_TYPE = "store_type";
 	private static final String PARAM_STORE_ID = "store_id";
@@ -59,25 +58,19 @@ public class CleanVersionWebScript extends DeclarativeWebScript {
 			final String guid = WebscriptHelper.getParam(templateArgs, PARAM_ID);
 			final NodeRef nodeRef = new NodeRef(storeType, storeId, guid);
 
-			if (logger.isDebugEnabled()) {
-				logger.error("Cleaning Noderef " + nodeRef);
-			}
+			logger.error("Cleaning Noderef {}", nodeRef);
 
 			// Number automatique version to keep
 			Integer keepAuto = WebscriptHelper.integerValue(req, PARAM_KEEP_AUTO);
 			keepAuto = keepAuto == null ? -1 : keepAuto;
 
-			if (logger.isDebugEnabled()) {
-				logger.error("Keep " + keepAuto + " auto-save versions");
-			}
+			logger.error("Keep {} auto-save versions", keepAuto);
 
 			// Number explicit version to keep
 			Integer keepExp = WebscriptHelper.integerValue(req, PARAM_KEEP_EXP);
 			keepExp = keepExp == null ? -1 : keepExp;
 
-			if (logger.isDebugEnabled()) {
-				logger.error("Keep " + keepExp + " explicit versions");
-			}
+			logger.error("Keep {} explicit versions", keepExp);
 
 			cleanVersion(nodeRef, keepAuto, keepExp);
 
@@ -92,10 +85,6 @@ public class CleanVersionWebScript extends DeclarativeWebScript {
 
 	/**
 	 * Removing version by using Alfresco Java API
-	 * 
-	 * @param nodeRef
-	 * @param keepAuto
-	 * @param keepExp
 	 */
 	private void cleanVersion(final NodeRef nodeRef, Integer keepAuto, Integer keepExp) {
 		final VersionHistory history = versionService.getVersionHistory(nodeRef);
@@ -105,9 +94,7 @@ public class CleanVersionWebScript extends DeclarativeWebScript {
 		for (Version version : history.getAllVersions()) {
 			Serializable collaboraautosave = version.getVersionProperties().get(CollaboraOnlineService.LOOL_AUTOSAVE);
 			if (collaboraautosave == null) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("v." + version.getVersionLabel() + " - not lool - keep");
-				}
+				logger.debug("v.{} - not lool - keep", version.getVersionLabel());
 
 				// Not Lool Version, ignoring
 				continue;
@@ -117,18 +104,14 @@ public class CleanVersionWebScript extends DeclarativeWebScript {
 				Boolean autosave = (Boolean) collaboraautosave;
 				// Removing old auto-save version
 				if (Boolean.TRUE.equals(autosave) && ++countAuto > keepAuto) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("v." + version.getVersionLabel() + " - remove auto");
-					}
+					logger.debug("v.{} - remove auto", version.getVersionLabel());
 
 					versionService.deleteVersion(nodeRef, version);
 				}
 
 				// Removing old save version (only from collabora)
 				if (Boolean.FALSE.equals(autosave) && ++countExp > keepExp) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("v." + version.getVersionLabel() + " - remove explicit");
-					}
+					logger.debug("v.{} - remove explicit", version.getVersionLabel());
 
 					versionService.deleteVersion(nodeRef, version);
 				}

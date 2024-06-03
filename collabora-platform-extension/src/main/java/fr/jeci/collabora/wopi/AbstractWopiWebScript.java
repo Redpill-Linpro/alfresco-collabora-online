@@ -19,6 +19,7 @@ package fr.jeci.collabora.wopi;
 import fr.jeci.collabora.alfresco.CollaboraOnlineService;
 import fr.jeci.collabora.alfresco.WOPIAccessTokenInfo;
 import net.sf.acegisecurity.Authentication;
+import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.rendition2.RenditionService2;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -35,8 +36,8 @@ import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.extensions.webscripts.*;
 
 import java.io.BufferedInputStream;
@@ -49,7 +50,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public abstract class AbstractWopiWebScript extends AbstractWebScript implements WopiHeader {
-	private static final Log logger = LogFactory.getLog(AbstractWopiWebScript.class);
+	private static final Logger logger = LoggerFactory.getLogger(AbstractWopiWebScript.class);
 
 	static final String ACCESS_TOKEN = "access_token";
 	static final String FILE_ID = "file_id";
@@ -78,8 +79,8 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 
 		if (logger.isDebugEnabled()) {
 			String currentLockId = this.collaboraOnlineService.lockGet(nodeRef);
-			logger.debug(req.getPathInfo() + " user='" + wopiToken.getUserName() + "' nodeRef='" + nodeRef + "' lockId="
-					+ currentLockId);
+			logger.debug("{} user='{}' nodeRef='{}' lockId={}", req.getPathInfo(), wopiToken.getUserName(), nodeRef,
+					currentLockId);
 		}
 
 		if (nodeRef == null) {
@@ -88,7 +89,6 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 		}
 		this.executeAsUser(req, res, nodeRef);
 	}
-
 
 	/**
 	 * Returns a NodeRef given a file Id. Note: Checks to see if the node exists aren't performed
@@ -99,8 +99,6 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 	protected NodeRef getFileNodeRef(String fileId) {
 		return new NodeRef(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE, fileId);
 	}
-
-
 
 	/**
 	 * Check and renew token if needed
@@ -135,12 +133,10 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 	protected void forceCurrentUser(final WOPIAccessTokenInfo wopiToken) {
 		Authentication originalFullAuthentication = AuthenticationUtil.getFullAuthentication();
 		if (originalFullAuthentication == null) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("CurrentAuthentication is null - setting CurrentUser to " + wopiToken.getUserName());
-			}
+			logger.debug("CurrentAuthentication is null - setting CurrentUser to {}", wopiToken.getUserName());
 			AuthenticationUtil.setFullyAuthenticatedUser(wopiToken.getUserName());
 		} else {
-			logger.info("Authenticate with user is " + originalFullAuthentication.getPrincipal());
+			logger.info("Authenticate with user is {}", originalFullAuthentication.getPrincipal());
 		}
 	}
 
@@ -194,8 +190,7 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 					versionProperties.put(CollaboraOnlineService.LOOL_AUTOSAVE, isAutosave);
 					return versionService.createVersion(nodeRef, versionProperties);
 				} catch (Exception e) {
-					logger.error("Error when writing content - retry", e);
-					throw e;
+					throw new AlfrescoRuntimeException("Error when writing content - retry", e);
 				}
 			}
 		};
@@ -204,15 +199,13 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 	}
 
 	protected void askForRendition(final NodeRef nodeRef) {
-
 		for (String name : renditions) {
 			try {
 				this.renditionService.render(nodeRef, name);
 			} catch (UnsupportedOperationException | java.lang.IllegalArgumentException exp) {
-				logger.warn("Rendition '" + name + "' not supported for " + nodeRef);
+				logger.warn("Rendition '{}' not supported for {}", name, nodeRef);
 			}
 		}
-
 	}
 
 	protected void headerActions(final WebScriptRequest req, final NodeRef nodeRef) {
@@ -252,15 +245,11 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 	private QName extractQname(WebScriptRequest req, String headerName) {
 		final String aspectToAddHdr = req.getHeader(headerName);
 
-		QName aspectToAdd = null;
 		if (StringUtils.isNotBlank(aspectToAddHdr)) {
-			if (logger.isDebugEnabled()) {
-				logger.debug(headerName + "=" + aspectToAddHdr);
-			}
-
-			aspectToAdd = QName.resolveToQName(prefixResolver, aspectToAddHdr);
+			logger.debug("{}={}", headerName, aspectToAddHdr);
+			return QName.resolveToQName(prefixResolver, aspectToAddHdr);
 		}
-		return aspectToAdd;
+		return null;
 	}
 
 	private Map<QName, Serializable> extractQnamesValues(WebScriptRequest req, String headerName) {
@@ -270,7 +259,7 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 		}
 
 		if (logger.isDebugEnabled()) {
-			logger.debug(headerName + "=" + ArrayUtils.toString(aspectToAddHdr));
+			logger.debug("{}={}", headerName, ArrayUtils.toString(aspectToAddHdr));
 		}
 
 		Map<QName, Serializable> aspectToAdd = new HashMap<>(aspectToAddHdr.length);
@@ -321,6 +310,5 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 		} else {
 			this.renditions = new String[] {};
 		}
-
 	}
 }

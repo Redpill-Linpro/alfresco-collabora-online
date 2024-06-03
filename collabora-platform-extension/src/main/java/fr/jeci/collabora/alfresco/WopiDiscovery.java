@@ -16,8 +16,8 @@ limitations under the License.
 */
 package fr.jeci.collabora.alfresco;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import javax.xml.stream.XMLInputFactory;
@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Load and parse the WopiDiscovery.xml file from Collabora Online
  */
 public class WopiDiscovery {
-	private static final Log logger = LogFactory.getLog(WopiDiscovery.class);
+	private static final Logger logger = LoggerFactory.getLogger(WopiDiscovery.class);
 
 	private static final String DEFAULT_HOSTING_DISCOVERY = "/hosting/discovery";
 	private static final int READ_TIMEOUT_MS = 500;
@@ -57,7 +57,7 @@ public class WopiDiscovery {
 			loadDiscoveryXML(openConnection.getInputStream());
 			this.hasCollaboraOnline.set(true);
 		} catch (IOException | XMLStreamException e) {
-			logger.warn("Can’t load Wopi Discovery URI : " + this.collaboraPrivateUrl + "/" + DEFAULT_HOSTING_DISCOVERY);
+			logger.warn("Can’t load Wopi Discovery URI : {}/{}", this.collaboraPrivateUrl, DEFAULT_HOSTING_DISCOVERY);
 		}
 	}
 
@@ -149,7 +149,7 @@ public class WopiDiscovery {
 					action.urlsrc = xr.getAttributeValue(null, "urlsrc");
 
 					if (app == null) {
-						logger.warn("Bad xml format, app is null for action: " + action);
+						logger.warn("Bad xml format, app is null for action: {}", action);
 						break;
 					}
 
@@ -169,9 +169,7 @@ public class WopiDiscovery {
 					break;
 
 				default:
-					if (logger.isDebugEnabled()) {
-						logger.debug("Not Used:" + xr.getLocalName());
-					}
+					logger.debug("Not Used:{}", xr.getLocalName());
 					break;
 				}
 

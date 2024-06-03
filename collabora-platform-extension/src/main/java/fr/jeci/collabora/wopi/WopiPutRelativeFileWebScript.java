@@ -27,6 +27,8 @@ import org.alfresco.util.Utf7;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.extensions.webscripts.Status;
 import org.springframework.extensions.webscripts.WebScriptException;
 import org.springframework.extensions.webscripts.WebScriptRequest;
@@ -41,12 +43,11 @@ import java.util.Map;
 
 /**
  * X-WOPI-ValidRelativeTarget IS NOT IMPLEMENT
- * 
- * @author jlesage
  *
+ * @author jlesage
  */
 public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
-	private static final Log logger = LogFactory.getLog(WopiPutRelativeFileWebScript.class);
+	private static final Logger logger = LoggerFactory.getLogger(WopiPutRelativeFileWebScript.class);
 
 	static final String X_WOPI_SUGGESTED_TARGET = "X-WOPI-SuggestedTarget";
 	static final String X_WOPI_RELATIVE_TARGET = "X-WOPI-RelativeTarget";
@@ -69,7 +70,7 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 
 		final String wopiSize = req.getHeader(X_WOPI_SIZE);
 		if (StringUtils.isNotBlank(wopiSize)) {
-			logger.warn("Header " + X_WOPI_SIZE + " is not implements: " + wopiSize);
+			logger.warn("Header {} is not implements: {}", X_WOPI_SIZE, wopiSize);
 		}
 
 		try {
@@ -77,10 +78,8 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 			jsonResponse(res, Status.STATUS_OK, model);
 
 		} catch (ConflictException e) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("ConflictException " + X_WOPI_LOCK + "=" + e.getCurrentLockId() + ";"
-						+ X_WOPI_LOCK_FAILURE_REASON + "=" + e.getLockFailureReason());
-			}
+			logger.debug("ConflictException {}={};{}={}", X_WOPI_LOCK, e.getCurrentLockId(), X_WOPI_LOCK_FAILURE_REASON,
+					e.getLockFailureReason());
 
 			res.setHeader(X_WOPI_LOCK, e.getCurrentLockId());
 			res.setHeader(X_WOPI_LOCK_FAILURE_REASON, e.getLockFailureReason());
@@ -103,9 +102,7 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 			throw new WebScriptException(X_WOPI_OVERRIDE + " unknown value " + wopiOverrideHeader);
 		}
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("WopiOverride=" + override.name());
-		}
+		logger.debug("WopiOverride={}", override.name());
 
 		final String lockId = req.getHeader(X_WOPI_LOCK);
 		collaboraOnlineService.lockSteal(nodeRef, lockId);
@@ -114,7 +111,7 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 		String currentLockId = null;
 		switch (override) {
 		case PUT:
-			logger.warn("PUT without LOCK for node " + nodeRef);
+			logger.warn("PUT without LOCK for node {}", nodeRef);
 			break;
 		case PUT_RELATIVE:
 			checkHeadersRelative(req);
@@ -146,9 +143,7 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 	}
 
 	private Map<String, String> saveAs(WebScriptRequest req, NodeRef newNodeRef) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("saveAs newNodeRef=" + newNodeRef);
-		}
+		logger.debug("saveAs newNodeRef={}", newNodeRef);
 
 		final InputStream inputStream = req.getContent().getInputStream();
 		if (inputStream == null) {
@@ -162,9 +157,7 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 
 			String newUrl = generateUrl(newNodeRef);
 
-			if (logger.isDebugEnabled()) {
-				logger.debug("WopiPutRelativeFileWebScript newUrl = '" + newUrl + "'");
-			}
+			logger.debug("WopiPutRelativeFileWebScript newUrl = '{}'", newUrl);
 
 			final Map<String, String> model = new HashMap<>(2);
 			final Map<QName, Serializable> properties = nodeService.getProperties(newNodeRef);
@@ -184,15 +177,11 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 			@Override
 			public String execute() {
 				WOPIAccessTokenInfo tokenInfo = collaboraOnlineService.createAccessToken(newNodeRef);
-				if (logger.isDebugEnabled()) {
-					logger.debug("tokenInfo = [" + tokenInfo.getUserName() + ":" + tokenInfo.getAccessToken() + "]");
-				}
+				logger.debug("tokenInfo = [{}:{}]", tokenInfo.getUserName(), tokenInfo.getAccessToken());
 				URL alfrescoPrivateURL = collaboraOnlineService.getAlfrescoPrivateURL();
 				String newUrl = String.format("%s%s%s?access_token=%s", alfrescoPrivateURL, "s/wopi/files/",
 						newNodeRef.getId(), tokenInfo.getAccessToken());
-				if (logger.isDebugEnabled()) {
-					logger.debug("newUrl = " + newUrl);
-				}
+				logger.debug("newUrl = {}", newUrl);
 				return newUrl;
 			}
 		};
@@ -213,9 +202,7 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR, "Node not exists: " + nodeRef);
 		}
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("createNodeWithValidName " + nodeRef);
-		}
+		logger.debug("createNodeWithValidName {}", nodeRef);
 
 		RetryingTransactionHelper.RetryingTransactionCallback<NodeRef> callback = new RetryingTransactionHelper.RetryingTransactionCallback<>() {
 			@Override
@@ -228,9 +215,7 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 					targetFileName = Utf7.decode(relative, Utf7.UTF7_MODIFIED);
 				}
 
-				if (logger.isDebugEnabled()) {
-					logger.debug("targetFileName " + targetFileName);
-				}
+				logger.debug("targetFileName {}", targetFileName);
 
 				int retry = MAX_RETRY;
 				NodeRef newNodeRef;
@@ -238,16 +223,12 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 					newNodeRef = createNode(isRelative, isOverwrite, nodeRef, targetFileName);
 					if (--retry < 0) {
 
-						if (logger.isDebugEnabled()) {
-							logger.debug("No retry >> " + retry);
-						}
+						logger.debug("No retry >> {}", retry);
 						break;
 					}
 					targetFileName = addSuffix(SUFFIX, targetFileName);
 
-					if (logger.isDebugEnabled()) {
-						logger.debug("Retry >> " + targetFileName);
-					}
+					logger.debug("Retry >> {}", targetFileName);
 				} while (newNodeRef == null);
 
 				return newNodeRef;
@@ -272,15 +253,13 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 	}
 
 	/**
-	 * Create a node in the same directory as the original node and with the same
-	 * type and properties (like a copy).
+	 * Create a node in the same directory as the original node and with the same type and properties (like a copy).
 	 *
-	 * @param isRelative     false, return null if the node can't be created. If
-	 *                       true, it's depends on overwrite parameter
-	 * @param overwrite      if the target node already exist and overwrite is true,
-	 *                       the target noderef node is return, else throw an
-	 *                       exception
-	 * @param sourceNodeRef        Node ref of the original node
+	 * @param isRelative     false, return null if the node can't be created. If true, it's depends on overwrite
+	 *                       parameter
+	 * @param overwrite      if the target node already exist and overwrite is true, the target noderef node is return,
+	 *                       else throw an exception
+	 * @param sourceNodeRef  Node ref of the original node
 	 * @param targetFileName Name of the new node
 	 * @return noderef of the node to write to or null
 	 */
@@ -288,7 +267,7 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 			String targetFileName) {
 
 		if (logger.isDebugEnabled()) {
-			logger.debug("createNode " + sourceNodeRef + " >> " + targetFileName);
+			logger.debug("createNode {} >> {}", sourceNodeRef, targetFileName);
 		}
 
 		ChildAssociationRef assocRef = nodeService.getPrimaryParent(sourceNodeRef);
@@ -324,21 +303,18 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 							"File with the specified name already exists: " + targetFileName);
 				}
 			} else {
-				logger.info("File with the specified name already exists: " + targetFileName + " try with another name");
+				logger.info("File with the specified name already exists: {} try with another name", targetFileName);
 			}
 		}
-		if (logger.isDebugEnabled()) {
-			logger.debug("createNode =>> " + newNodeRef);
-		}
+		logger.debug("createNode =>> {}", newNodeRef);
 
 		return newNodeRef;
 	}
 
 	private void checkHeadersRelative(WebScriptRequest req) {
-
 		final String wopiFileConversion = req.getHeader(X_WOPI_FILE_CONVERSION);
 		if (StringUtils.isNotBlank(wopiFileConversion)) {
-			logger.warn("Header " + X_WOPI_FILE_CONVERSION + " is not implements: " + wopiFileConversion);
+			logger.warn("Header {} is not implements: {}", X_WOPI_FILE_CONVERSION, wopiFileConversion);
 		}
 
 		final String suggested = req.getHeader(X_WOPI_SUGGESTED_TARGET);
@@ -358,9 +334,8 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 	}
 
 	/**
-	 * If the string begins with a period (.), it is a file extension. Otherwise, it
-	 * is a full file name.
-	 * 
+	 * If the string begins with a period (.), it is a file extension. Otherwise, it is a full file name.
+	 *
 	 * @param suggested      new file name or new extension for the file.
 	 * @param sourceFileName name of the initial file
 	 * @return Suggested Filename

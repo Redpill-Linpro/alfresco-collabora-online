@@ -17,8 +17,8 @@ limitations under the License.
 package fr.jeci.collabora.alfresco;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.extensions.webscripts.*;
 
 import java.io.IOException;
@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GetTokenWebScript extends DeclarativeWebScript {
-	private static final Log logger = LogFactory.getLog(GetTokenWebScript.class);
+	private static final Logger logger = LoggerFactory.getLogger(GetTokenWebScript.class);
 
 	private static final String WOPI_SRC_URL = "wopi_src_url";
 	private static final String ACCESS_TOKEN_TTL = "access_token_ttl";
@@ -56,11 +56,7 @@ public class GetTokenWebScript extends DeclarativeWebScript {
 
 		try {
 			String wopiSrcUrl = this.collaboraOnlineService.getWopiSrcURL(nodeRef, action);
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("Get Token " + action + " for wopiSrcUrl " + wopiSrcUrl);
-			}
-
+			logger.debug("Get Token {} for wopiSrcUrl {}", action, wopiSrcUrl);
 			model.put(WOPI_SRC_URL, wopiSrcUrl);
 		} catch (IOException e) {
 			status.setCode(Status.STATUS_INTERNAL_SERVER_ERROR, "Failed to get wopiSrcURL");
