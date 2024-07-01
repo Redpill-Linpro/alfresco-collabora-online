@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>fr.jeci.alfresco</groupId>
   <artifactId>alfresco-collabora-online</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2-SNAPSHOT</version>
   <name>Alfresco Collabora Online</name>
   <description>Collabora Online extension for Alfresco 6+</description>
   <packaging>pom</packaging>
@@ -11,6 +11,9 @@
     <maven>3.3.0</maven>
   </prerequisites>
   <properties>
+    <java.version>17</java.version>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <!-- Alfresco Maven Plugin version to use -->
     <alfresco.sdk.version>4.4.0</alfresco.sdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -393,9 +396,9 @@
           <alwaysGenerate>true</alwaysGenerate>
         </configuration>
       </plugin>
+
     </plugins>
   </build>
-
   <profiles>
     <profile>
       <id>java8</id>
