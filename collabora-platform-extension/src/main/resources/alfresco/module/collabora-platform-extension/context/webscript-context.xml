@@ -65,6 +65,7 @@
 		class="fr.jeci.collabora.wopi.WopiCheckFileInfoWebScript"
 		parent="abstract-wopi-webscript">
 		<property name="permissionService" ref="PermissionService" />
+		<property name="authorityService" ref="AuthorityService" />
 	</bean>
 
 	<bean id="webscript.fr.jeci.collabora.wopi.GetFile.get"

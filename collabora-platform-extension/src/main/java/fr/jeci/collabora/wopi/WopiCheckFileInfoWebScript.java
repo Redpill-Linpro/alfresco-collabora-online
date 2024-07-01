@@ -18,6 +18,7 @@ package fr.jeci.collabora.wopi;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AccessStatus;
@@ -49,12 +50,14 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 	private static final String VERSION = "Version";
 	private static final String USER_FRIENDLY_NAME = "UserFriendlyName";
 	private static final String USER_CAN_WRITE = "UserCanWrite";
+	private static final String IS_ADMIN_USER = "isAdminUser";
 	private static final String USER_ID = "UserId";
 	private static final String SIZE = "Size";
 	private static final String OWNER_ID = "OwnerId";
 
 	private static final String BASE_FILE_NAME = "BaseFileName";
 
+    private AuthorityService authorityService;
 	private PermissionService permissionService;
 
 	@Override
@@ -85,6 +88,7 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 		model.put(USER_ID, userName);
 		model.put(USER_CAN_WRITE, Boolean.toString(userCanWrite(nodeRef)));
 		model.put(USER_FRIENDLY_NAME, userName);
+		model.put(IS_ADMIN_USER, Boolean.toString(isAdminUser()));
 
 		jsonResponse(res, 200, model);
 	}
@@ -100,6 +104,15 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 	private boolean userCanWrite(final NodeRef nodeRef) {
 		AccessStatus perm = permissionService.hasPermission(nodeRef, PermissionService.WRITE);
 		return AccessStatus.ALLOWED == perm;
+	}
+
+	private boolean isAdminUser() {
+         String currentUserName = AuthenticationUtil.getRunAsUser();
+         return authorityService.isAdminAuthority(currentUserName);
+    }
+
+    public void setAuthorityService(AuthorityService authorityService) {
+	    this.authorityService = authorityService;
 	}
 
 	public void setPermissionService(PermissionService permissionService) {
