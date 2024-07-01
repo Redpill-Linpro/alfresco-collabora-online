@@ -16,13 +16,13 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <!-- Alfresco Maven Plugin version to use -->
-    <alfresco.sdk.version>4.4.0</alfresco.sdk.version>
+    <alfresco.sdk.version>4.7.0</alfresco.sdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Properties used in dependency declarations, you don't need to change these -->
     <alfresco.groupId>org.alfresco</alfresco.groupId>
     <alfresco.bomDependencyArtifactId>acs-community-packaging</alfresco.bomDependencyArtifactId>
-    <alfresco.version>7.2.0</alfresco.version>
-    <share.version>14.96</share.version>
+    <alfresco.version>7.4.1.5</alfresco.version>
+    <share.version>21.22</share.version>
 
     <!-- JRebel Hot reloading of classpath stuff and web resource stuff -->
     <jrebel.version>1.1.8</jrebel.version>
@@ -34,23 +34,23 @@
     <!-- Alfresco Platform Config -->
     <acs.host>acs</acs.host>
     <docker.acs.image>docker.io/alfresco/alfresco-content-repository-community</docker.acs.image>
-    <docker.acs.version>7.2.0</docker.acs.version>
+    <docker.acs.version>7.4.1.5</docker.acs.version>
     <docker.acs.user>alfresco</docker.acs.user>
 
     <!-- Share Config -->
     <share.host>share</share.host>
     <docker.share.image>docker.io/alfresco/alfresco-share</docker.share.image>
-    <docker.share.version>7.2.0</docker.share.version>
+    <docker.share.version>7.4.1.6</docker.share.version>
 
     <!-- Postgres Config -->
     <db.host>postgres</db.host>
     <docker.postgres.image>docker.io/postgres</docker.postgres.image>
-    <docker.postgres.version>13.3</docker.postgres.version>
+    <docker.postgres.version>14.12</docker.postgres.version>
 
     <!-- Solr Config -->
     <solr.host>solr6</solr.host>
     <docker.solr.image>docker.io/alfresco/alfresco-search-services</docker.solr.image>
-    <docker.solr.version>2.0.8.2</docker.solr.version>
+    <docker.solr.version>2.0.10</docker.solr.version>
 
     <!-- Angular / Content App Config -->
     <appcontent.host>aca</appcontent.host>
@@ -58,22 +58,21 @@
     <docker.node.version>10.22</docker.node.version>
     <docker.nginx.image>docker.io/library/nginx</docker.nginx.image>
     <docker.nginx.version>stable-alpine</docker.nginx.version>
-    <aca.version>1.10.0</aca.version>
 
     <!--Transform Core AIO Config -->
     <transform-core-aio.host>transform-core-aio</transform-core-aio.host>
     <docker.transform-core-aio.image>docker.io/alfresco/alfresco-transform-core-aio</docker.transform-core-aio.image>
-    <docker.transform-core-aio.version>2.5.7</docker.transform-core-aio.version>
+    <docker.transform-core-aio.version>5.1.0</docker.transform-core-aio.version>
 
     <!-- ActiveMQ Config -->
     <activemq.host>activemq</activemq.host>
     <docker.activemq.image>docker.io/alfresco/alfresco-activemq</docker.activemq.image>
-    <docker.activemq.version>5.16.4-jre11-centos7</docker.activemq.version>
+    <docker.activemq.version>5.16-jre17-rockylinux8</docker.activemq.version>
 
     <!-- Collabora Online Config -->
     <code.host>collabora</code.host>
     <docker.code.image>docker.io/collabora/code</docker.code.image>
-    <docker.code.version>23.05.7.2.1</docker.code.version>
+    <docker.code.version>24.04.3.1.1</docker.code.version>
     <code.port>9980</code.port>
 
     <!-- This parameter is only required for those cases in which ACS is not exposed in http://localhost:8080/alfresco (i.e. Windows Docker) -->
@@ -397,48 +396,8 @@
           <alwaysGenerate>true</alwaysGenerate>
         </configuration>
       </plugin>
-
     </plugins>
   </build>
-  <profiles>
-    <profile>
-      <id>java8</id>
-      <activation>
-        <jdk>[1.8,11.0)</jdk>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.8.0</version>
-            <configuration>
-              <source>1.8</source>
-              <target>1.8</target>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>java11</id>
-      <activation>
-        <jdk>[11.0,)</jdk>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.8.0</version>
-            <configuration>
-              <release>11</release>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 
   <!-- Alfresco Maven Repositories -->
   <repositories>
