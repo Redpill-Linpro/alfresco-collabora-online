@@ -88,7 +88,8 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 		model.put(USER_ID, userName);
 		model.put(USER_CAN_WRITE, Boolean.toString(userCanWrite(nodeRef)));
 		model.put(USER_FRIENDLY_NAME, userName);
-		model.put(IS_ADMIN_USER, Boolean.toString(isAdminUser()));
+		boolean isAdmin = authorityService.isAdminAuthority(userName);
+		model.put(IS_ADMIN_USER, Boolean.toString(isAdmin));
 
 		jsonResponse(res, 200, model);
 	}
@@ -105,11 +106,6 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 		AccessStatus perm = permissionService.hasPermission(nodeRef, PermissionService.WRITE);
 		return AccessStatus.ALLOWED == perm;
 	}
-
-	private boolean isAdminUser() {
-         String currentUserName = AuthenticationUtil.getRunAsUser();
-         return authorityService.isAdminAuthority(currentUserName);
-    }
 
     public void setAuthorityService(AuthorityService authorityService) {
 	    this.authorityService = authorityService;
