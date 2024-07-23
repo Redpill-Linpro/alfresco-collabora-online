@@ -17,7 +17,7 @@ YAHOO.Bubbling.fire("registerAction", {
 
                         var wopiFileURL = window.location.origin+"/alfresco/s/wopi/files/" + fileId;
 
-                        var frameSrcURL = wopi_src_url + "WOPISrc=" + encodeURIComponent(wopiFileURL) + "&lang=" + navigator.language;
+                        var frameSrcURL = wopi_src_url + "WOPISrc=" + encodeURIComponent(wopiFileURL) + "&lang=" + navigator.language.substring(0,2);
 
                         require(["jquery"], (function ($) {
                             var form = '<form id="loleafletform" name="loleafletform" target="loleafletframe" action="' + frameSrcURL + '" method="post">' +
