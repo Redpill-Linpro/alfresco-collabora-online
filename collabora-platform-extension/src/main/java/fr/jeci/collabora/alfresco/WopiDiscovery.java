@@ -52,6 +52,8 @@ public class WopiDiscovery {
 	public void init() {
 		try {
 			URL wopiDiscoveryURL = new URL(this.collaboraPrivateUrl, DEFAULT_HOSTING_DISCOVERY);
+			logger.info("Load Wopi Discovery URI : " + wopiDiscoveryURL);
+
 			URLConnection openConnection = wopiDiscoveryURL.openConnection();
 			openConnection.setReadTimeout(READ_TIMEOUT_MS);
 			loadDiscoveryXML(openConnection.getInputStream());
@@ -63,10 +65,6 @@ public class WopiDiscovery {
 
 	public boolean hasCollaboraOnline() {
 		return this.hasCollaboraOnline.get();
-	}
-
-	public void hasCollaboraOnline(boolean online) {
-		this.hasCollaboraOnline.set(online);
 	}
 
 	/**
