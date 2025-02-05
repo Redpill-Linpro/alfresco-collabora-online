@@ -83,6 +83,10 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 		model.put(USER_CAN_WRITE, Boolean.toString(userCanWrite(nodeRef)));
 		model.put(USER_FRIENDLY_NAME, userName);
 
+		// Add WOPI properties to hide Save As and Export buttons
+		model.put("HideSaveOption", "true");
+		model.put("HideExportOption", "true");
+
 		jsonResponse(res, 200, model);
 	}
 
