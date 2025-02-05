@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <page>
-    <title>Edit in Collabora Online</title>
+    <title>Redigera samtidigt</title>
     <title-id>page.collabora-online-edit.title</title-id>
-    <description>Edit in Collabora Online</description>
+    <description>Redigera samtidigt</description>
     <description-id>page.collabora-online-edit.description</description-id>
     <template-instance>collabora-online-edit</template-instance>
     <authentication>user</authentication>
