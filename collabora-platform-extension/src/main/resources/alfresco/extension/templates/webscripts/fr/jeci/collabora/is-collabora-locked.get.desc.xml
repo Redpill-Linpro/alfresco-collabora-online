@@ -1,0 +1,9 @@
+<webscript>
+    <shortname>Is Collabora locked</shortname>
+    <description>Check if node is locked by collabora</description>
+    <url>/lool/is-collabora-locked?nodeRef={nodeRef}</url>
+    <family>Collabora Online</family>
+    <authentication>user</authentication>
+    <format default="json"></format>
+    <transaction allow="readonly">required</transaction>
+</webscript>

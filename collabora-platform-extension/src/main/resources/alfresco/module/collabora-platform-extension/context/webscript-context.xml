@@ -42,6 +42,12 @@
 		<property name="versionService" ref="VersionService" />
 	</bean>
 
+	<bean id="webscript.fr.jeci.collabora.is-collabora-locked.get"
+		  class="fr.jeci.collabora.alfresco.IsCollaboraLockedWebScript"
+		  parent="webscript">
+		<property name="nodeService"
+				  ref="NodeService" />
+	</bean>
 
 	<!-- WOPI Specs -->
 
