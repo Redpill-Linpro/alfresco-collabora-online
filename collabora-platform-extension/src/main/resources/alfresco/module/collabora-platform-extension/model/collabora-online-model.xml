@@ -39,6 +39,10 @@
 	<types />
 
 	<aspects>
+		<aspect name="collabora:collaboraLock">
+			<title>Locked</title>
+			<description>Marker aspect applied for documents that are being edited with Collabora Online currently.</description>
+		</aspect>
 		<aspect name="collabora:collaboraOnline">
 			<title>Collabora Online</title>
 			<description>Edit with Collabora Online</description>
