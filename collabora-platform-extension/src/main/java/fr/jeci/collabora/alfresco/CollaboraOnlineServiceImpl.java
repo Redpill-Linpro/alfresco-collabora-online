@@ -273,7 +273,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 			String lockFailureReason = String.format(CANT_LOCK + LOCK_ID_IS_BLANK, nodeRef);
 			throw new ConflictException(EMPTY_STRING, lockFailureReason);
 		}
-		nodeService.addAspect(nodeRef,CollaboraOnlineModel.ASPECT_COLLABORA_ONLINE,null);
+
 		this.lockService.lock(nodeRef, LockType.WRITE_LOCK, 30 * 60, Lifetime.EPHEMERAL, lockId);
 
 		return lockId;
@@ -324,7 +324,6 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 		}
 
 		if (isNodeLock(nodeRef)) {
-			nodeService.removeAspect(nodeRef,CollaboraOnlineModel.ASPECT_COLLABORA_ONLINE);
 			this.lockService.unlock(nodeRef);
 		} else {
 			String lockFailureReason = String.format(CANT_UNLOCK + NODE_NOT_LOCK, nodeRef);
@@ -360,13 +359,12 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 			AuthenticationUtil.runAs(new AuthenticationUtil.RunAsWork<Void>() {
 				@Override
 				public Void doWork() throws Exception {
-					nodeService.removeAspect(nodeRef,CollaboraOnlineModel.ASPECT_COLLABORA_ONLINE);
 					lockService.unlock(nodeRef);
 					return null;
 				}
 			}, lockState.getOwner());
 		}
-		nodeService.addAspect(nodeRef,CollaboraOnlineModel.ASPECT_COLLABORA_ONLINE,null);
+
 		this.lockService.lock(nodeRef, LockType.WRITE_LOCK, 30 * 60, Lifetime.EPHEMERAL, lockId);
 	}
 
@@ -376,7 +374,6 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 			logger.debug("UNLOCK '" + nodeRef + "'");
 		}
 
-		nodeService.removeAspect(nodeRef,CollaboraOnlineModel.ASPECT_COLLABORA_ONLINE);
 		this.lockService.unlock(nodeRef);
 	}
 

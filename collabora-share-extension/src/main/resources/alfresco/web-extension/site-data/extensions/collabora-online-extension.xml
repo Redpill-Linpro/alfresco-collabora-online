@@ -38,7 +38,6 @@
                                 <permission allow="true">Write</permission>
                             </permissions>
                             <evaluator>evaluator.dk.magenta.doclib.action.isMimetypeEditableLibreOffice</evaluator>
-                            <evaluator>evaluator.doclib.action.allowCollaboraEdit</evaluator>
                         </action>
 
                          <!-- Upload new version -->
@@ -78,7 +77,6 @@
                             <evaluator negate="true">evaluator.doclib.action.isLocked</evaluator>
                             <evaluator negate="true">evaluator.doclib.action.isAosOnlineEditAvailable</evaluator>
                             <evaluator negate="true">evaluator.doclib.indicator.collaboraEditing</evaluator>
-                            <evaluator negate="true">evaluator.doclib.action.isLocked</evaluator>
                          </action>
 
                          <!-- Edit online AOS -->
@@ -92,7 +90,6 @@
                             <evaluator negate="true">evaluator.doclib.action.isLockedForAos</evaluator>
                             <evaluator>evaluator.doclib.action.isMimetypeEditableAos</evaluator>
                             <evaluator negate="true">evaluator.doclib.indicator.collaboraEditing</evaluator>
-                            <evaluator negate="true">evaluator.doclib.action.isLocked</evaluator>
                          </action>
 
                          <!-- Edit offline -->
