@@ -59,8 +59,6 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 	@Override
 	public void executeAsUser(final WebScriptRequest req, final WebScriptResponse res, final NodeRef nodeRef)
 			throws IOException {
-		ensureVersioningEnabled(nodeRef);
-
 		final Map<String, String> model = this.collaboraOnlineService.serverInfo();
 		final Map<QName, Serializable> properties = nodeService.getProperties(nodeRef);
 
@@ -71,6 +69,8 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 			LocalDateTime modifiedDatetime = new LocalDateTime(lastModifiedDate);
 			model.put(LAST_MODIFIED_TIME, ISODateTimeFormat.dateTime().print(modifiedDatetime));
 			model.put(VERSION, currentVersion.getVersionLabel());
+		} else {
+			ensureVersioningEnabled(nodeRef);
 		}
 
 		// BaseFileName need extension, else COL load it in read-only mode
@@ -102,8 +102,15 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 	private void ensureVersioningEnabled(final NodeRef nodeRef) {
 		// Force Versioning
 		if (!nodeService.hasAspect(nodeRef, ContentModel.ASPECT_VERSIONABLE)) {
-			Map<QName, Serializable> initialVersionProps = new HashMap<>(1, 1.0f);
-			versionService.ensureVersioningEnabled(nodeRef, initialVersionProps);
+			Map<QName, Serializable> props = new HashMap<>(1, 1.0f);
+
+			// should auto versioning be requested?
+			props.put(ContentModel.PROP_AUTO_VERSION, true);
+
+			// should auto versioning of properties be requested?
+			props.put(ContentModel.PROP_AUTO_VERSION_PROPS, false);
+
+			versionService.ensureVersioningEnabled(nodeRef, props);
 		}
 	}
 
