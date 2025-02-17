@@ -20,8 +20,6 @@ public interface CollaboraOnlineModel {
 	/** @Deprecated Adding Aspect change node, that is not what we want */
 	static final QName ASPECT_COLLABORA_ONLINE = QName.createQName(COLLABORA_MODEL_1_0_URI, "collaboraOnline");
 
-	static final QName ASPECT_COLLABORA_LOCK = QName.createQName(COLLABORA_MODEL_1_0_URI, "collaboraLock");
-
 	static final QName PROP_AUTOSAVE = QName.createQName(COLLABORA_MODEL_1_0_URI, "autosave");
 
 	/** @Deprecated Use LockService */
