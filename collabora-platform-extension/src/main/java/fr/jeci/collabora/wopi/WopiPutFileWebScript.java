@@ -20,10 +20,10 @@ import fr.jeci.collabora.alfresco.ConflictException;
 import org.alfresco.service.cmr.repository.ContentIOException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.version.Version;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.joda.time.LocalDateTime;
 import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.extensions.webscripts.Status;
 import org.springframework.extensions.webscripts.WebScriptException;
 import org.springframework.extensions.webscripts.WebScriptRequest;
@@ -38,15 +38,23 @@ import java.util.Map;
 
 /**
  * Put the binary content into Alfresco.
- * 
+ * <br>
  * The X-LOOL-WOPI-Timestamp is compare with PROP_FROZEN_MODIFIED or PROP_CREATED_DATE from the current version of the
  * target file.
- * 
- * @author jlesage
+ * <br>
+ * We can change aspect or properties with specific headers, but these changes will not trigger policy.
+ * <ul>
+ *    <li>X-PRISTY-ADD-ASPECT</li>
+ *    <li>X-PRISTY-DEL-ASPECT</li>
+ *    <li>X-PRISTY-DEL-PROPERTY</li>
+ *    <li>X-PRISTY-ADD-PROPERTY</li>
+ * </ul>
+ * It is safer to upload the file, then change metadata or aspect in another call.
  *
+ * @author jlesage
  */
 public class WopiPutFileWebScript extends AbstractWopiWebScript {
-	private static final Log logger = LogFactory.getLog(WopiPutFileWebScript.class);
+	private static final Logger logger = LoggerFactory.getLogger(WopiPutFileWebScript.class);
 
 	@Override
 	public void executeAsUser(final WebScriptRequest req, final WebScriptResponse res, final NodeRef nodeRef)
@@ -65,15 +73,12 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 			collaboraOnlineService.lockSteal(nodeRef, lockId);
 			final Version newVersion = writeFileToDisk(inputStream, isAutosave, nodeRef);
 
-			if (!isAutosave) {
-				askForRendition(nodeRef);
-			}
-
 			final Map<String, String> model = new HashMap<>(1);
 			if (newVersion == null) {
-				logger.warn("No version create for " + nodeRef);
+				logger.warn("No version create for {}", nodeRef);
 				model.put("warn", "No version create for " + nodeRef);
 			} else {
+				// WARN: To policy trigger with these actions
 				headerActions(req, nodeRef);
 
 				putLastModifiedTime(nodeRef, newVersion, model);
@@ -81,29 +86,28 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 
 			jsonResponse(res, Status.STATUS_OK, model);
 
+			// Ask rendition only at last
+			if (!isAutosave) {
+				askForRendition(nodeRef);
+			}
+
 		} catch (ContentIOException we) {
 			final String msg = "Error writing to file";
 			logger.error(msg, we);
 			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR, msg);
 		} catch (ConflictException e) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("ConflictException " + X_WOPI_LOCK + "=" + e.getCurrentLockId() + ";"
-						+ X_WOPI_LOCK_FAILURE_REASON + "=" + e.getLockFailureReason());
-			}
+			logger.debug("ConflictException {}={};{}={}", X_WOPI_LOCK, e.getCurrentLockId(), X_WOPI_LOCK_FAILURE_REASON,
+					e.getLockFailureReason());
 
 			res.setHeader(X_WOPI_LOCK, e.getCurrentLockId());
 			res.setHeader(X_WOPI_LOCK_FAILURE_REASON, e.getLockFailureReason());
 			jsonResponse(res, STATUS_CONFLICT, e.getLockFailureReason());
 		}
+
 	}
 
-
 	private void putLastModifiedTime(final NodeRef nodeRef, final Version newVersion, final Map<String, String> model) {
-
-		if (logger.isInfoEnabled()) {
-			logger.info(
-					"Modifier for the above nodeRef [" + nodeRef.toString() + "] is: " + newVersion.getFrozenModifier());
-		}
+		logger.info("Modifier for the above nodeRef [{}] is: {}", nodeRef, newVersion.getFrozenModifier());
 
 		Date newModified = newVersion.getFrozenModifiedDate();
 		LocalDateTime modifiedDatetime = new LocalDateTime(newModified);
@@ -119,7 +123,7 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 		final boolean isAutosave = hdrAutosave != null && Boolean.parseBoolean(hdrAutosave.trim());
 
 		if (logger.isDebugEnabled()) {
-			logger.debug("- Request " + (isAutosave ? "is" : "is not") + " AUTOSAVE");
+			logger.debug("- Request {} AUTOSAVE", isAutosave ? "is" : "is not");
 		}
 		return isAutosave;
 	}
@@ -127,11 +131,6 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 	/**
 	 * Check the creation/modification date for current version. No check is there is no version, because the cm:modified
 	 * is change for any change of a properties.
-	 * 
-	 * @param req
-	 * @param res
-	 * @param nodeRef
-	 * @throws IOException
 	 */
 	private void checkWopiTimestamp(final WebScriptRequest req, final WebScriptResponse res, final NodeRef nodeRef)
 			throws IOException {
@@ -142,9 +141,7 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 			final String hdrTimestamp = req.getHeader(X_LOOL_WOPI_TIMESTAMP);
 			final Date modified = currentVersion.getFrozenModifiedDate();
 
-			if (logger.isDebugEnabled()) {
-				logger.debug(X_LOOL_WOPI_TIMESTAMP + "='" + hdrTimestamp + "'");
-			}
+			logger.debug("{}='{}'", X_LOOL_WOPI_TIMESTAMP, hdrTimestamp);
 
 			if (!checkTimestamp(hdrTimestamp, modified)) {
 				final Map<String, String> model = new HashMap<>(1);
@@ -156,7 +153,7 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 
 	/**
 	 * Check if X-LOOL-WOPI-Timestamp is equal to PROP_FROZEN_MODIFIED
-	 * 
+	 *
 	 * @param hdrTimestamp "X-LOOL-WOPI-Timestamp"
 	 * @param modified     PROP_FROZEN_MODIFIED
 	 * @return true if timestamps are equal
@@ -167,15 +164,12 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 			// Ignore if no X-LOOL-WOPI-Timestamp
 			return true;
 		}
-		LocalDateTime loolTimestamp = null;
+		LocalDateTime loolTimestamp;
 		try {
 			// 2011-02-24T16:16:37.300000Z or 2022-04-08T08:29:01.355
 			loolTimestamp = LocalDateTime.parse(hdrTimestamp, ISODateTimeFormat.dateTimeParser());
 		} catch (DateTimeException | IllegalArgumentException e) {
-			logger.error("checkTimestamp Error : " + e.getMessage());
-		}
-
-		if (loolTimestamp == null) {
+			logger.error("checkTimestamp Error : {}", e.getMessage());
 			return false;
 		}
 
@@ -183,11 +177,9 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 		final LocalDateTime localDate = new LocalDateTime(modified);
 
 		if (loolTimestamp.compareTo(localDate) != 0) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("PROP_FROZEN_MODIFIED : " + modified);
-				logger.debug(X_LOOL_WOPI_TIMESTAMP + " : " + hdrTimestamp);
-			}
-			logger.error("checkTimestamp Error : " + X_LOOL_WOPI_TIMESTAMP + " is different than PROP_MODIFIED");
+			logger.debug("PROP_FROZEN_MODIFIED : {}", modified);
+			logger.debug("{} : {}", X_LOOL_WOPI_TIMESTAMP, hdrTimestamp);
+			logger.error("checkTimestamp Error : {} is different than PROP_MODIFIED", X_LOOL_WOPI_TIMESTAMP);
 			return false;
 		}
 

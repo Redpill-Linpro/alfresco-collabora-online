@@ -20,6 +20,7 @@ import fr.jeci.collabora.alfresco.CollaboraOnlineService;
 import fr.jeci.collabora.alfresco.WOPIAccessTokenInfo;
 import net.sf.acegisecurity.Authentication;
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.rendition2.RenditionService2;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -66,6 +67,7 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 	protected NamespacePrefixResolver prefixResolver;
 	protected DictionaryService dictionaryService;
 	protected RenditionService2 renditionService;
+	protected BehaviourFilter behaviourFilter;
 
 	public abstract void executeAsUser(final WebScriptRequest req, final WebScriptResponse res, final NodeRef nodeRef)
 			throws IOException;
@@ -210,37 +212,46 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 
 	}
 
+	/**
+	 * Do actions on node. This modifications will not trigger policy to prevent cascading effect.
+	 *
+	 * @param req
+	 * @param nodeRef
+	 */
 	protected void headerActions(final WebScriptRequest req, final NodeRef nodeRef) {
 		final QName aspectToAdd = extractQname(req, X_PRISTY_ADD_ASPECT);
 		final QName aspectToDel = extractQname(req, X_PRISTY_DEL_ASPECT);
 		final Map<QName, Serializable> delProperties = extractQnamesValues(req, X_PRISTY_DEL_PROPERTY);
 		final Map<QName, Serializable> properties = extractQnamesValues(req, X_PRISTY_ADD_PROPERTY);
 
-		retryingTransactionHelper.doInTransaction(new RetryingTransactionHelper.RetryingTransactionCallback<Void>() {
-			@Override
-			public Void execute() {
+		/* As we only receive String, we must convert value to proper datatype */
+		for (Entry<QName, Serializable> prop : properties.entrySet()) {
+			DataTypeDefinition dataType = dictionaryService.getProperty(prop.getKey()).getDataType();
+			prop.setValue((Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, prop.getValue()));
+		}
 
+		retryingTransactionHelper.doInTransaction((RetryingTransactionHelper.RetryingTransactionCallback<Void>) () -> {
+
+			try {
+				// Disable all behaviours
+				behaviourFilter.disableBehaviour();
 				if (aspectToDel != null && nodeService.hasAspect(nodeRef, aspectToDel)) {
 					nodeService.removeAspect(nodeRef, aspectToDel);
 				}
-				if (aspectToDel != null) {
+				if (aspectToAdd != null) {
 					nodeService.addAspect(nodeRef, aspectToAdd, properties);
 				}
 				for (QName prop : delProperties.keySet()) {
 					nodeService.removeProperty(nodeRef, prop);
 				}
 
-				/* As we only receive String, we must convert value to proper datatype */
-				for (Entry<QName, Serializable> prop : properties.entrySet()) {
-					DataTypeDefinition dataType = dictionaryService.getProperty(prop.getKey()).getDataType();
-					prop.setValue((Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, prop.getValue()));
-				}
-
 				nodeService.addProperties(nodeRef, properties);
-
-				return null;
+			} finally {
+				// Enable all behaviours
+				behaviourFilter.enableBehaviour();
 			}
-		}, false, true);
+			return null;
+		}, false, false);
 
 	}
 
@@ -317,5 +328,9 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 			this.renditions = new String[] {};
 		}
 
+	}
+
+	public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
+		this.behaviourFilter = behaviourFilter;
 	}
 }
