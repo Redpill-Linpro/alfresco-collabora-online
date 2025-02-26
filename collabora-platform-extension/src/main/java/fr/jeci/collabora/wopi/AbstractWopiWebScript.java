@@ -41,10 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.extensions.webscripts.*;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -89,7 +86,17 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR,
 					"No noderef for WOPIAccessTokenInfo:" + wopiToken);
 		}
-		this.executeAsUser(req, res, nodeRef);
+		try {
+			this.executeAsUser(req, res, nodeRef);
+		} catch (Throwable e) {
+			if (logger.isDebugEnabled()) {
+				StringWriter stack = new StringWriter();
+				e.printStackTrace(new PrintWriter(stack));
+				logger.debug("Caught exception; decorating with appropriate status template : " + stack.toString());
+			}
+
+			throw createStatusException(e, req, res);
+		}
 	}
 
 	/**
@@ -225,27 +232,19 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 		}
 
 		retryingTransactionHelper.doInTransaction((RetryingTransactionHelper.RetryingTransactionCallback<Void>) () -> {
-
-			try {
-				// Disable all behaviours
-				behaviourFilter.disableBehaviour();
-				if (aspectToDel != null && nodeService.hasAspect(nodeRef, aspectToDel)) {
-					nodeService.removeAspect(nodeRef, aspectToDel);
-				}
-				if (aspectToAdd != null) {
-					nodeService.addAspect(nodeRef, aspectToAdd, properties);
-				}
-				for (QName prop : delProperties.keySet()) {
-					nodeService.removeProperty(nodeRef, prop);
-				}
-
-				nodeService.addProperties(nodeRef, properties);
-			} finally {
-				// Enable all behaviours
-				behaviourFilter.enableBehaviour();
+			if (aspectToDel != null && nodeService.hasAspect(nodeRef, aspectToDel)) {
+				nodeService.removeAspect(nodeRef, aspectToDel);
 			}
+			if (aspectToAdd != null) {
+				nodeService.addAspect(nodeRef, aspectToAdd, properties);
+			}
+			for (QName prop : delProperties.keySet()) {
+				nodeService.removeProperty(nodeRef, prop);
+			}
+
+			nodeService.addProperties(nodeRef, properties);
 			return null;
-		}, false, false);
+		}, false, true);
 
 	}
 
