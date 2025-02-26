@@ -38,9 +38,18 @@ import java.util.Map;
 
 /**
  * Put the binary content into Alfresco.
- * <p>
+ * <br>
  * The X-LOOL-WOPI-Timestamp is compare with PROP_FROZEN_MODIFIED or PROP_CREATED_DATE from the current version of the
  * target file.
+ * <br>
+ * We can change aspect or properties with specific headers, but these changes will not trigger policy.
+ * <ul>
+ *    <li>X-PRISTY-ADD-ASPECT</li>
+ *    <li>X-PRISTY-DEL-ASPECT</li>
+ *    <li>X-PRISTY-DEL-PROPERTY</li>
+ *    <li>X-PRISTY-ADD-PROPERTY</li>
+ * </ul>
+ * It is safer to upload the file, then change metadata or aspect in another call.
  *
  * @author jlesage
  */
@@ -64,21 +73,23 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 			collaboraOnlineService.lockSteal(nodeRef, lockId);
 			final Version newVersion = writeFileToDisk(inputStream, isAutosave, nodeRef);
 
-			if (!isAutosave) {
-				askForRendition(nodeRef);
-			}
-
 			final Map<String, String> model = new HashMap<>(1);
 			if (newVersion == null) {
 				logger.warn("No version create for {}", nodeRef);
 				model.put("warn", "No version create for " + nodeRef);
 			} else {
+				// WARN: To policy trigger with these actions
 				headerActions(req, nodeRef);
 
 				putLastModifiedTime(nodeRef, newVersion, model);
 			}
 
 			jsonResponse(res, Status.STATUS_OK, model);
+
+			// Ask rendition only at last
+			if (!isAutosave) {
+				askForRendition(nodeRef);
+			}
 
 		} catch (ContentIOException we) {
 			final String msg = "Error writing to file";
@@ -92,6 +103,7 @@ public class WopiPutFileWebScript extends AbstractWopiWebScript {
 			res.setHeader(X_WOPI_LOCK_FAILURE_REASON, e.getLockFailureReason());
 			jsonResponse(res, STATUS_CONFLICT, e.getLockFailureReason());
 		}
+
 	}
 
 	private void putLastModifiedTime(final NodeRef nodeRef, final Version newVersion, final Map<String, String> model) {
