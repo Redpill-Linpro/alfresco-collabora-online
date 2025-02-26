@@ -89,9 +89,7 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 			this.executeAsUser(req, res, nodeRef);
 		} catch (Throwable e) {
 			if (logger.isDebugEnabled()) {
-				StringWriter stack = new StringWriter();
-				e.printStackTrace(new PrintWriter(stack));
-				logger.debug("Caught exception; decorating with appropriate status template : " + stack.toString());
+				logger.debug("Caught exception; decorating with appropriate status template", e);
 			}
 
 			throw createStatusException(e, req, res);
@@ -186,14 +184,22 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 	 * @return The new version create
 	 */
 	protected Version writeFileToDisk(final InputStream inputStream, final boolean isAutosave, final NodeRef nodeRef) {
-		RetryingTransactionHelper.RetryingTransactionCallback<Version> callback = new RetryingTransactionHelper.RetryingTransactionCallback<>() {
-			@Override
-			public Version execute() {
-				ContentWriter writer = contentService.getWriter(nodeRef, ContentModel.PROP_CONTENT, true);
+		return retryingTransactionHelper.doInTransaction(() -> {
 
+			// Inhibit auto-version, we will create Version manually
+			this.behaviourFilter.disableBehaviour(ContentModel.ASPECT_VERSIONABLE);
+			try {
+				ContentWriter writer = contentService.getWriter(nodeRef, ContentModel.PROP_CONTENT, true);
 				// both streams are closed by putContent
 				writer.putContent(new BufferedInputStream(inputStream));
+			} catch (Exception e) {
+				logger.warn("Exception when writing content \"{}\": \"{}\" - will retry", nodeRef, e.getMessage());
+				throw new AlfrescoRuntimeException("Error when writing content - retry", e);
+			} finally {
+				this.behaviourFilter.enableBehaviour(ContentModel.ASPECT_VERSIONABLE);
+			}
 
+			try {
 				Map<String, Serializable> versionProperties = new HashMap<>(2);
 				versionProperties.put(VersionBaseModel.PROP_VERSION_TYPE, VersionType.MINOR);
 				if (isAutosave) {
@@ -201,10 +207,12 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 				}
 				versionProperties.put(CollaboraOnlineService.LOOL_AUTOSAVE, isAutosave);
 				return versionService.createVersion(nodeRef, versionProperties);
+			} catch (Exception e) {
+				logger.warn("Exception when creating version \"{}\": \"{}\" - will retry", nodeRef, e.getMessage());
+				throw new AlfrescoRuntimeException("Error when creating version - retry", e);
 			}
-		};
 
-		return retryingTransactionHelper.doInTransaction(callback, false, true);
+		}, false, true);
 	}
 
 	protected void askForRendition(final NodeRef nodeRef) {
