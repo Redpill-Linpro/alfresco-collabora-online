@@ -60,9 +60,14 @@ public class WopiDiscovery {
 			URL wopiDiscoveryURL = new URL(this.collaboraPrivateUrl, DEFAULT_HOSTING_DISCOVERY);
 			URLConnection openConnection = wopiDiscoveryURL.openConnection();
 			openConnection.setReadTimeout(READ_TIMEOUT_MS);
-			loadDiscoveryXML(openConnection.getInputStream());
+			try{
+				loadDiscoveryXML(openConnection.getInputStream());
+			} catch(Exception e){
+				logger.error("discoveryXML load failed: " + e.getMessage());
+			}
+
 			this.hasCollaboraOnline.set(true);
-		} catch (IOException | XMLStreamException e) {
+		} catch (IOException e) {
 			logger.warn("Can't load Wopi Discovery URI : " + this.collaboraPrivateUrl + "/" + DEFAULT_HOSTING_DISCOVERY);
 		}
 	}
@@ -107,7 +112,6 @@ public class WopiDiscovery {
 		if (this.discoveryDoc != null) {
 			return;
 		}
-
 		XMLInputFactory factory = XMLInputFactory.newInstance();
 		factory.setProperty(XMLInputFactory.IS_COALESCING, true);
 
@@ -116,7 +120,6 @@ public class WopiDiscovery {
 		List<DiscoveryApp> mApplications = new ArrayList<>(7);
 		Map<String, List<DiscoveryAction>> mActions = new HashMap<>();
 		Map<String, DiscoveryAction> mLegacyActions = new HashMap<>();
-
 		DiscoveryApp app = null;
 		DiscoveryAction action = null;
 		while (xr.hasNext()) {
