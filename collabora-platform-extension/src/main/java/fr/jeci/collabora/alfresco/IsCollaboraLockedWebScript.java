@@ -31,34 +31,26 @@ public class IsCollaboraLockedWebScript extends DeclarativeWebScript implements 
     protected Map<String, Object> executeImpl(WebScriptRequest req, Status status, Cache cache) {
         Map<String, Object> result = new HashMap<>();
         String nodeRefParam = req.getParameter("nodeRef");
-        logger.error("nodeRefParam="+nodeRefParam);
         // Check for missing or empty parameter
         if (nodeRefParam == null || nodeRefParam.trim().isEmpty()) {
-            logger.error("test1");
             result.put("locked", false);
             return result;
         }
 
         NodeRef nodeRef;
         try {
-            logger.error("test2");
             nodeRef = new NodeRef(nodeRefParam);
         } catch (Exception e) {
             // In case of an invalid nodeRef string, log the error and return a safe default.
-            logger.error("Invalid nodeRef parameter: " + nodeRefParam, e);
             result.put("locked", false);
             return result;
         }
 
         try {
-            // TODO REMOVE THIS NEW ASPECT THAT WE DONT NEED
-            logger.error("test3");
-            boolean isLocked = nodeService.hasAspect(nodeRef, CollaboraOnlineModel.ASPECT_COLLABORA_ONLINE);
-            logger.error("Locked: " + isLocked);
+            boolean isLocked = nodeService.hasAspect(nodeRef, CollaboraOnlineModel.ASPECT_COLLABORA_LOCK);
             result.put("locked", Boolean.toString(isLocked));
         } catch (Exception e) {
             // If checking the aspect fails, log the error and default to unlocked.
-            logger.error("Error checking aspect for nodeRef: " + nodeRef, e);
             result.put("locked", false);
         }
 

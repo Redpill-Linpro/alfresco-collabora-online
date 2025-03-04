@@ -49,7 +49,6 @@ public class AllowCollaboraEditEvaluator extends BaseEvaluator {
                 JSONObject jsonResponse = (JSONObject) parser.parse(response.getResponse());
                 Object lockedObj = jsonResponse.get("locked");
                 String locked = lockedObj == null ? "false" : lockedObj.toString();
-                logger.error("Locked: " + locked + " evaluator" + evaluator.evaluate(jsonObject));
                 if(locked.equals("false") && evaluator.evaluate(jsonObject)) {
                     return false;
                 } else {
