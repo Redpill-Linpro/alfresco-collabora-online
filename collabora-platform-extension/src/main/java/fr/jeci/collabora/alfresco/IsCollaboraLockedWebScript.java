@@ -1,7 +1,7 @@
 package fr.jeci.collabora.alfresco;
 
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -17,14 +17,15 @@ import java.util.Map;
 public class IsCollaboraLockedWebScript extends DeclarativeWebScript implements InitializingBean {
     private static final Log logger = LogFactory.getLog(IsCollaboraLockedWebScript.class);
 
-    private NodeService nodeService;
+    private SimpleCache<String, Boolean> collaboraMarkerCache;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(nodeService, "nodeService");
+        Assert.notNull(collaboraMarkerCache, "collaboraMarkerCache must be set");
     }
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
+
+    public void setCollaboraMarkerCache(SimpleCache<String, Boolean> collaboraMarkerCache) {
+        this.collaboraMarkerCache = collaboraMarkerCache;
     }
 
     @Override
@@ -47,8 +48,8 @@ public class IsCollaboraLockedWebScript extends DeclarativeWebScript implements 
         }
 
         try {
-            boolean isLocked = nodeService.hasAspect(nodeRef, CollaboraOnlineModel.ASPECT_COLLABORA_LOCK);
-            result.put("locked", Boolean.toString(isLocked));
+            Boolean isLocked = collaboraMarkerCache.get(nodeRef.getId());
+            result.put("locked", Boolean.toString(isLocked != null ? isLocked : Boolean.FALSE));
         } catch (Exception e) {
             // If checking the aspect fails, log the error and default to unlocked.
             result.put("locked", false);

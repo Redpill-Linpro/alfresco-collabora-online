@@ -42,24 +42,23 @@
     </property>
   </bean>
 
-  <bean id="evaluator.doclib.action.allowCollaboraEdit"
-        class="org.redpill.alfresco.web.evaluator.AllowCollaboraEditEvaluator">
-    <property name="evaluator" ref="evaluator.doclib.metadata.isLocked"/>
-  </bean>
-
-  <bean id="evaluator.doclib.metadata.isNotLocked" class="org.redpill.alfresco.web.evaluator.NegateEvaluator">
-    <property name="evaluator" ref="evaluator.doclib.metadata.isLocked"/>
-  </bean>
-
-  <bean id="evaluator.doclib.action.collaboraEditComposite" parent="evaluator.doclib.action.chainedMatchOne">
-    <property name="evaluators">
-      <list>
-        <ref bean="evaluator.doclib.action.allowCollaboraEdit"/>
-        <ref bean="evaluator.doclib.metadata.isNotLocked"/>
-      </list>
+  <bean id="evaluator.doclib.metadata.hasLockableAspect" class="org.alfresco.web.evaluator.HasAspectEvaluator">
+    <property name="aspects">
+      <bean class="java.util.ArrayList">
+        <constructor-arg>
+          <list>
+            <value>cm:lockable</value>
+            <!-- Add more aspects here if needed -->
+          </list>
+        </constructor-arg>
+      </bean>
     </property>
   </bean>
 
+  <bean id="evaluator.doclib.action.allowCollaboraEdit"
+        class="org.redpill.alfresco.web.evaluator.AllowCollaboraEditEvaluator">
+    <property name="evaluator" ref="evaluator.doclib.metadata.hasLockableAspect"/>
+  </bean>
 
   <!-- Edit Online LibreOffice -->
   <bean id="evaluator.dk.magenta.doclib.action.isMimetypeEditableLibreOffice" parent="evaluator.doclib.action.isMimetype">

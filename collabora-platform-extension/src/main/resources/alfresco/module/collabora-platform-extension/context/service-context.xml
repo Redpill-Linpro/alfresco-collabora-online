@@ -32,20 +32,22 @@
       <property name="cacheStatsEnabled" value="${lool.cache.fileIdAccessTokenMapSharedCache.tx.statsEnabled}"/>
   </bean>
 
+  <bean id="collaboraMarkerCache" class="fr.jeci.collabora.alfresco.SimpleMarkerCache">
+  </bean>
+
   <bean id="CollaboraOnlineService"
         class="fr.jeci.collabora.alfresco.CollaboraOnlineServiceImpl" init-method="init">
       <property name="tokenMap" ref="lool-fileIdAccessTokenMapSharedCache"/>
       <property name="collaboraPublicUrl" value="${collabora.public.url}"/>
-      
       <property name="alfrescoPublicURL" value="${alfresco.public.url}"/>
       <property name="alfrescoPrivateURL" value="${alfresco.private.url}"/>
-      
       <property name="tokenTtlMs" value="${lool.wopi.token.ttl}"/>
       <property name="nodeService" ref="NodeService"/>
       <property name="permissionService" ref="PermissionService"/>
       <property name="lockService" ref="LockService"/>
-      
       <property name="wopiDiscovery" ref="WopiDiscovery"/>
+      <property name="transactionService" ref="TransactionService"/>
+      <property name="collaboraMarkerCache" ref="collaboraMarkerCache"/>
   </bean>
 
   <bean id="WopiDiscovery"

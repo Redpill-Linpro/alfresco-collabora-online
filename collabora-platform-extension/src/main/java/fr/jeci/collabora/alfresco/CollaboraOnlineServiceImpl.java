@@ -23,6 +23,7 @@ import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.lock.mem.Lifetime;
 import org.alfresco.repo.lock.mem.LockState;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.lock.LockType;
 import org.alfresco.service.cmr.repository.ContentData;
@@ -30,6 +31,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
+import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -71,6 +73,9 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 	private NodeService nodeService;
 	private PermissionService permissionService;
 	private LockService lockService;
+	private TransactionService transactionService;
+	private RetryingTransactionHelper txnHelper;
+	private SimpleCache<String, Boolean> collaboraMarkerCache;
 
 	private final SecureRandom random = new SecureRandom();
 
@@ -78,6 +83,23 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 		if (collaboraPublicUrl == null) {
 			throw new AlfrescoRuntimeException("Invalid Configuration, need collaboraPublicUrl (collabora.public.url)");
 		}
+	}
+
+	public void setCollaboraMarkerCache(SimpleCache<String, Boolean> collaboraMarkerCache) {
+		this.collaboraMarkerCache = collaboraMarkerCache;
+	}
+
+	public void markDocumentAsOpen(NodeRef nodeRef) {
+		collaboraMarkerCache.put(nodeRef.getId(), Boolean.TRUE);
+	}
+
+	public void clearDocumentMarker(NodeRef nodeRef) {
+		collaboraMarkerCache.remove(nodeRef.getId());
+	}
+
+	public boolean isDocumentOpen(NodeRef nodeRef) {
+		Boolean marker = collaboraMarkerCache.get(nodeRef.getId());
+		return marker != null && marker;
 	}
 
 	/**
@@ -273,8 +295,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 			String lockFailureReason = String.format(CANT_LOCK + LOCK_ID_IS_BLANK, nodeRef);
 			throw new ConflictException(EMPTY_STRING, lockFailureReason);
 		}
-		nodeService.addAspect(nodeRef,CollaboraOnlineModel.ASPECT_COLLABORA_ONLINE,null);
-		this.lockService.lock(nodeRef, LockType.WRITE_LOCK, 30 * 60, Lifetime.EPHEMERAL, lockId);
+		lockAndAddAspect(nodeRef, LockType.WRITE_LOCK, lockId);
 
 		return lockId;
 	}
@@ -305,7 +326,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 		}
 
 		if (isNodeLock(nodeRef)) {
-			this.lockService.lock(nodeRef, LockType.NODE_LOCK, 30 * 60, Lifetime.EPHEMERAL, lockId);
+			lockAndAddAspect(nodeRef, LockType.WRITE_LOCK, lockId);
 		} else {
 			String lockFailureReason = String.format(CANT_REFRESH + NODE_NOT_LOCK, nodeRef);
 			throw new ConflictException(EMPTY_STRING, lockFailureReason);
@@ -324,8 +345,7 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 		}
 
 		if (isNodeLock(nodeRef)) {
-			nodeService.removeAspect(nodeRef,CollaboraOnlineModel.ASPECT_COLLABORA_ONLINE);
-			this.lockService.unlock(nodeRef);
+			unlockAndRemoveAspect(this.lockService, nodeRef);
 		} else {
 			String lockFailureReason = String.format(CANT_UNLOCK + NODE_NOT_LOCK, nodeRef);
 			throw new ConflictException(EMPTY_STRING, lockFailureReason);
@@ -360,14 +380,26 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 			AuthenticationUtil.runAs(new AuthenticationUtil.RunAsWork<Void>() {
 				@Override
 				public Void doWork() throws Exception {
-					nodeService.removeAspect(nodeRef,CollaboraOnlineModel.ASPECT_COLLABORA_ONLINE);
-					lockService.unlock(nodeRef);
+					unlockAndRemoveAspect(lockService, nodeRef);
 					return null;
 				}
 			}, lockState.getOwner());
 		}
-		nodeService.addAspect(nodeRef,CollaboraOnlineModel.ASPECT_COLLABORA_ONLINE,null);
-		this.lockService.lock(nodeRef, LockType.WRITE_LOCK, 30 * 60, Lifetime.EPHEMERAL, lockId);
+		lockAndAddAspect(nodeRef, LockType.WRITE_LOCK, lockId);
+	}
+
+	private void lockAndAddAspect(NodeRef nodeRef, LockType writeLock, String lockId) {
+		// Run as system and execute both operations in the same transaction
+		AuthenticationUtil.runAsSystem(() -> {
+			txnHelper.doInTransaction(() -> {
+				// Add the custom aspect and then lock the node as part of one transaction
+				//nodeService.addAspect(nodeRef, CollaboraOnlineModel.ASPECT_COLLABORA_LOCK, null);
+				markDocumentAsOpen(nodeRef);
+				lockService.lock(nodeRef, writeLock, 30 * 60, Lifetime.EPHEMERAL, lockId);
+				return null;
+			});
+			return null;
+		});
 	}
 
 	@Override
@@ -375,9 +407,20 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 		if (logger.isDebugEnabled()) {
 			logger.debug("UNLOCK '" + nodeRef + "'");
 		}
+		unlockAndRemoveAspect(this.lockService, nodeRef);
+	}
 
-		nodeService.removeAspect(nodeRef,CollaboraOnlineModel.ASPECT_COLLABORA_ONLINE);
-		this.lockService.unlock(nodeRef);
+	private void unlockAndRemoveAspect(LockService lockService, NodeRef nodeRef) {
+		AuthenticationUtil.runAsSystem(() -> {
+			txnHelper.doInTransaction(() -> {
+				// Unlock the node and then remove the custom aspect in one atomic transaction
+				lockService.unlock(nodeRef);
+				//nodeService.removeAspect(nodeRef, CollaboraOnlineModel.ASPECT_COLLABORA_LOCK);
+				clearDocumentMarker(nodeRef);
+				return null;
+			});
+			return null;
+		});
 	}
 
 	private boolean isNodeLock(NodeRef nodeRef) {
@@ -434,5 +477,10 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 
 	public void setLockService(LockService lockService) {
 		this.lockService = lockService;
+	}
+
+	public void setTransactionService(TransactionService transactionService) {
+		this.transactionService = transactionService;
+		this.txnHelper = transactionService.getRetryingTransactionHelper();
 	}
 }

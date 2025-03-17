@@ -38,6 +38,7 @@
                                 <permission allow="true">Write</permission>
                             </permissions>
                             <evaluator>evaluator.dk.magenta.doclib.action.isMimetypeEditableLibreOffice</evaluator>
+                            <evaluator>evaluator.doclib.action.allowCollaboraEdit</evaluator>
                         </action>
 
                          <!-- Upload new version -->

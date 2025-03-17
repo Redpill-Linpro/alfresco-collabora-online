@@ -14,9 +14,8 @@ public class NegateEvaluator extends BaseEvaluator {
     @Override
     public boolean evaluate(JSONObject jsonObject) {
         if (evaluator == null) {
-            // You might choose to log a warning here.
             return false;
-        }//todo remove me if this works
+        }
         return !evaluator.evaluate(jsonObject);
     }
 }
