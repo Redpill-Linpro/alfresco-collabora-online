@@ -21,8 +21,8 @@ import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.extensions.webscripts.Status;
 import org.springframework.extensions.webscripts.WebScriptException;
 import org.springframework.extensions.webscripts.WebScriptRequest;
@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class WopiGetFileWebScript extends AbstractWopiWebScript {
-	private static final Log logger = LogFactory.getLog(WopiGetFileWebScript.class);
+	private static final Logger logger = LoggerFactory.getLogger(WopiGetFileWebScript.class);
 
 	/**
 	 * The default buffer size 4k
@@ -41,7 +41,6 @@ public class WopiGetFileWebScript extends AbstractWopiWebScript {
 
 	@Override
 	public void executeAsUser(final WebScriptRequest req, final WebScriptResponse res, final NodeRef nodeRef) {
-
 		final ContentData contentProp = (ContentData) nodeService.getProperty(nodeRef, ContentModel.PROP_CONTENT);
 		res.setContentType(contentProp.getMimetype());
 		res.setContentEncoding(contentProp.getEncoding());
@@ -49,7 +48,7 @@ public class WopiGetFileWebScript extends AbstractWopiWebScript {
 		final ContentReader reader = contentService.getReader(nodeRef, ContentModel.PROP_CONTENT);
 
 		if (reader == null) {
-			logger.error("No content reader for node=" + nodeRef);
+			logger.error("No content reader for node={}", nodeRef);
 			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR, "No content reader for node=" + nodeRef);
 		}
 
@@ -57,12 +56,9 @@ public class WopiGetFileWebScript extends AbstractWopiWebScript {
 			// We don't want to close the outputStream, this is done by Tomcat
 			long copied = IOUtils.copyLarge(inputStream, res.getOutputStream(), new byte[DEFAULT_BUFFER_SIZE]);
 
-			if (logger.isDebugEnabled()) {
-				logger.debug("Stream copied " + copied + " bytes");
-			}
+			logger.debug("Stream copied {} bytes", copied);
 		} catch (IOException e) {
-			logger.error(e.getMessage(), e);
-			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR, "Failed to copy contetn stream", e);
+			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR, "Failed to copy content stream", e);
 		}
 	}
 }

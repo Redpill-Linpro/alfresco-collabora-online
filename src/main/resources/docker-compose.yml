@@ -84,27 +84,19 @@ services:
     networks:
       - backend
 
-  ${appcontent.host}:
-    image: collabora-aca-extension:development
+  ${proxy.host}:
+    image: alfresco-collabora-online:development
     build:
       dockerfile: ./Dockerfile
-      context: ../../collabora-aca-extension-docker/target
+      context: ../../alfresco-collabora-online-docker/target
     environment:
-      BASE_PATH: ./
       PORT: 8080
-      ACS_URL: http://${public.host}:${public.port}
-
-      URL_HOST_ADF: http://${public.host}:${public.port}/alfresco
-      APP_BASE_SHARE_URL: http://${public.host}:${public.port}/share/s
-      PROXY_HOST_ADF: http://${public.host}:${public.port}/demo
-      URL_HOST_BPM_ADF: http://${public.host}:${public.port}
-      NOTIFICATION_LAST: 2000
-      AUTH_TYPE: BASIC
-      PROVIDERS: ALL
+      PROXY_HOST: http://${public.host}:${public.port}
     ports:
-      - "${public.port}:8080"
+      - ${public.port}:8080
     depends_on:
       - ${acs.host}
+      - ${share.host}
     networks:
       - backend
 

@@ -29,17 +29,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import fr.jeci.collabora.alfresco.CollaboraOnlineModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * @author Cindy Piassale 
- * Search for files for which the lock has expired
- * Removing locks
- *
+ * @author Cindy Piassale Search for files for which the lock has expired Removing locks
  * @deprecated We use LockService now
  */
 public class CleanLockJobExecuter {
 
-	private static final Log logger = LogFactory.getLog(CleanLockJobExecuter.class);
+	private static final Logger logger = LoggerFactory.getLogger(CleanLockJobExecuter.class);
 
 	private SearchService searchService;
 	private NodeService nodeService;
@@ -56,9 +55,7 @@ public class CleanLockJobExecuter {
 		query.append(" +@").append(CollaboraOnlineModel.COLLABORA_MODEL_PREFIX).append("\\:");
 		query.append(CollaboraOnlineModel.PROP_LOCK_EXPIRATION.getLocalName()).append(":[MIN TO NOW}");
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("CleanLockJobExecute - Query : " + query);
-		}
+		logger.debug("CleanLockJobExecute - Query : {}", query);
 		ResultSet result = this.searchService.query(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE,
 				SearchService.LANGUAGE_LUCENE, query.toString());
 		try {

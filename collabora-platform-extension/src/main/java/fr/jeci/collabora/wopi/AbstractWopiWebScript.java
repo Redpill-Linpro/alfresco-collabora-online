@@ -19,7 +19,9 @@ package fr.jeci.collabora.wopi;
 import fr.jeci.collabora.alfresco.CollaboraOnlineService;
 import fr.jeci.collabora.alfresco.WOPIAccessTokenInfo;
 import net.sf.acegisecurity.Authentication;
+import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.rendition2.RenditionService2;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -35,21 +37,18 @@ import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.extensions.webscripts.*;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 public abstract class AbstractWopiWebScript extends AbstractWebScript implements WopiHeader {
-	private static final Log logger = LogFactory.getLog(AbstractWopiWebScript.class);
+	private static final Logger logger = LoggerFactory.getLogger(AbstractWopiWebScript.class);
 
 	static final String ACCESS_TOKEN = "access_token";
 	static final String FILE_ID = "file_id";
@@ -66,6 +65,7 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 	protected NamespacePrefixResolver prefixResolver;
 	protected DictionaryService dictionaryService;
 	protected RenditionService2 renditionService;
+	protected BehaviourFilter behaviourFilter;
 
 	public abstract void executeAsUser(final WebScriptRequest req, final WebScriptResponse res, final NodeRef nodeRef)
 			throws IOException;
@@ -78,17 +78,24 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 
 		if (logger.isDebugEnabled()) {
 			String currentLockId = this.collaboraOnlineService.lockGet(nodeRef);
-			logger.debug(req.getPathInfo() + " user='" + wopiToken.getUserName() + "' nodeRef='" + nodeRef + "' lockId="
-					+ currentLockId);
+			logger.debug("{} user='{}' nodeRef='{}' lockId={}", req.getPathInfo(), wopiToken.getUserName(), nodeRef,
+					currentLockId);
 		}
 
 		if (nodeRef == null) {
 			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR,
 					"No noderef for WOPIAccessTokenInfo:" + wopiToken);
 		}
-		this.executeAsUser(req, res, nodeRef);
-	}
+		try {
+			this.executeAsUser(req, res, nodeRef);
+		} catch (Throwable e) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Caught exception; decorating with appropriate status template", e);
+			}
 
+			throw createStatusException(e, req, res);
+		}
+	}
 
 	/**
 	 * Returns a NodeRef given a file Id. Note: Checks to see if the node exists aren't performed
@@ -99,8 +106,6 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 	protected NodeRef getFileNodeRef(String fileId) {
 		return new NodeRef(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE, fileId);
 	}
-
-
 
 	/**
 	 * Check and renew token if needed
@@ -135,12 +140,10 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 	protected void forceCurrentUser(final WOPIAccessTokenInfo wopiToken) {
 		Authentication originalFullAuthentication = AuthenticationUtil.getFullAuthentication();
 		if (originalFullAuthentication == null) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("CurrentAuthentication is null - setting CurrentUser to " + wopiToken.getUserName());
-			}
+			logger.debug("CurrentAuthentication is null - setting CurrentUser to {}", wopiToken.getUserName());
 			AuthenticationUtil.setFullyAuthenticatedUser(wopiToken.getUserName());
 		} else {
-			logger.info("Authenticate with user is " + originalFullAuthentication.getPrincipal());
+			logger.info("Authenticate with user is {}", originalFullAuthentication.getPrincipal());
 		}
 	}
 
@@ -177,90 +180,90 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 	 * @return The new version create
 	 */
 	protected Version writeFileToDisk(final InputStream inputStream, final boolean isAutosave, final NodeRef nodeRef) {
-		RetryingTransactionHelper.RetryingTransactionCallback<Version> callback = new RetryingTransactionHelper.RetryingTransactionCallback<>() {
-			@Override
-			public Version execute() {
-				try {
-					ContentWriter writer = contentService.getWriter(nodeRef, ContentModel.PROP_CONTENT, true);
+		return retryingTransactionHelper.doInTransaction(() -> {
 
-					// both streams are closed by putContent
-					writer.putContent(new BufferedInputStream(inputStream));
-
-					Map<String, Serializable> versionProperties = new HashMap<>(2);
-					versionProperties.put(VersionBaseModel.PROP_VERSION_TYPE, VersionType.MINOR);
-					if (isAutosave) {
-						versionProperties.put(VersionBaseModel.PROP_DESCRIPTION, CollaboraOnlineService.AUTOSAVE_DESCRIPTION);
-					}
-					versionProperties.put(CollaboraOnlineService.LOOL_AUTOSAVE, isAutosave);
-					return versionService.createVersion(nodeRef, versionProperties);
-				} catch (Exception e) {
-					logger.error("Error when writing content - retry", e);
-					throw e;
-				}
+			// Inhibit auto-version, we will create Version manually
+			this.behaviourFilter.disableBehaviour(ContentModel.ASPECT_VERSIONABLE);
+			try {
+				ContentWriter writer = contentService.getWriter(nodeRef, ContentModel.PROP_CONTENT, true);
+				// both streams are closed by putContent
+				writer.putContent(new BufferedInputStream(inputStream));
+			} catch (Exception e) {
+				logger.warn("Exception when writing content \"{}\": \"{}\" - will retry", nodeRef, e.getMessage());
+				throw new AlfrescoRuntimeException("Error when writing content - retry", e);
+			} finally {
+				this.behaviourFilter.enableBehaviour(ContentModel.ASPECT_VERSIONABLE);
 			}
-		};
 
-		return retryingTransactionHelper.doInTransaction(callback, false, true);
+			try {
+				Map<String, Serializable> versionProperties = new HashMap<>(2);
+				versionProperties.put(VersionBaseModel.PROP_VERSION_TYPE, VersionType.MINOR);
+				if (isAutosave) {
+					versionProperties.put(VersionBaseModel.PROP_DESCRIPTION, CollaboraOnlineService.AUTOSAVE_DESCRIPTION);
+				}
+				versionProperties.put(CollaboraOnlineService.LOOL_AUTOSAVE, isAutosave);
+				return versionService.createVersion(nodeRef, versionProperties);
+			} catch (Exception e) {
+				logger.warn("Exception when creating version \"{}\": \"{}\" - will retry", nodeRef, e.getMessage());
+				throw new AlfrescoRuntimeException("Error when creating version - retry", e);
+			}
+
+		}, false, true);
 	}
 
 	protected void askForRendition(final NodeRef nodeRef) {
-
 		for (String name : renditions) {
 			try {
 				this.renditionService.render(nodeRef, name);
 			} catch (UnsupportedOperationException | java.lang.IllegalArgumentException exp) {
-				logger.warn("Rendition '" + name + "' not supported for " + nodeRef);
+				logger.warn("Rendition '{}' not supported for {}", name, nodeRef);
 			}
 		}
-
 	}
 
+	/**
+	 * Do actions on node. This modifications will not trigger policy to prevent cascading effect.
+	 *
+	 * @param req
+	 * @param nodeRef
+	 */
 	protected void headerActions(final WebScriptRequest req, final NodeRef nodeRef) {
-		QName aspectToAdd = extractQname(req, X_PRISTY_ADD_ASPECT);
-		QName aspectToDel = extractQname(req, X_PRISTY_DEL_ASPECT);
-		Map<QName, Serializable> delProperties = extractQnamesValues(req, X_PRISTY_DEL_PROPERTY);
-		Map<QName, Serializable> properties = extractQnamesValues(req, X_PRISTY_ADD_PROPERTY);
+		final QName aspectToAdd = extractQname(req, X_PRISTY_ADD_ASPECT);
+		final QName aspectToDel = extractQname(req, X_PRISTY_DEL_ASPECT);
+		final Map<QName, Serializable> delProperties = extractQnamesValues(req, X_PRISTY_DEL_PROPERTY);
+		final Map<QName, Serializable> properties = extractQnamesValues(req, X_PRISTY_ADD_PROPERTY);
 
-		retryingTransactionHelper.doInTransaction(new RetryingTransactionHelper.RetryingTransactionCallback<Void>() {
-			@Override
-			public Void execute() {
+		/* As we only receive String, we must convert value to proper datatype */
+		for (Entry<QName, Serializable> prop : properties.entrySet()) {
+			DataTypeDefinition dataType = dictionaryService.getProperty(prop.getKey()).getDataType();
+			prop.setValue((Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, prop.getValue()));
+		}
 
-				if (aspectToDel != null) {
-					nodeService.removeAspect(nodeRef, aspectToDel);
-				}
-				if (aspectToDel != null) {
-					nodeService.addAspect(nodeRef, aspectToAdd, properties);
-				}
-				for (QName prop : delProperties.keySet()) {
-					nodeService.removeProperty(nodeRef, prop);
-				}
-
-				/* As we only receive String, we must convert value to proper datatype */
-				for (Entry<QName, Serializable> prop : properties.entrySet()) {
-					DataTypeDefinition dataType = dictionaryService.getProperty(prop.getKey()).getDataType();
-					prop.setValue((Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, prop.getValue()));
-				}
-
-				nodeService.addProperties(nodeRef, properties);
-
-				return null;
+		retryingTransactionHelper.doInTransaction((RetryingTransactionHelper.RetryingTransactionCallback<Void>) () -> {
+			if (aspectToDel != null && nodeService.hasAspect(nodeRef, aspectToDel)) {
+				nodeService.removeAspect(nodeRef, aspectToDel);
 			}
-		});
+			if (aspectToAdd != null) {
+				nodeService.addAspect(nodeRef, aspectToAdd, properties);
+			}
+			for (QName prop : delProperties.keySet()) {
+				nodeService.removeProperty(nodeRef, prop);
+			}
+
+			nodeService.addProperties(nodeRef, properties);
+			return null;
+		}, false, true);
 
 	}
 
 	private QName extractQname(WebScriptRequest req, String headerName) {
 		final String aspectToAddHdr = req.getHeader(headerName);
 
-		QName aspectToAdd = null;
 		if (StringUtils.isNotBlank(aspectToAddHdr)) {
-			if (logger.isDebugEnabled()) {
-				logger.debug(headerName + "=" + aspectToAddHdr);
-			}
-
-			aspectToAdd = QName.resolveToQName(prefixResolver, aspectToAddHdr);
+			logger.debug("{}={}", headerName, aspectToAddHdr);
+			return QName.resolveToQName(prefixResolver, aspectToAddHdr);
 		}
-		return aspectToAdd;
+		return null;
 	}
 
 	private Map<QName, Serializable> extractQnamesValues(WebScriptRequest req, String headerName) {
@@ -270,7 +273,7 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 		}
 
 		if (logger.isDebugEnabled()) {
-			logger.debug(headerName + "=" + ArrayUtils.toString(aspectToAddHdr));
+			logger.debug("{}={}", headerName, ArrayUtils.toString(aspectToAddHdr));
 		}
 
 		Map<QName, Serializable> aspectToAdd = new HashMap<>(aspectToAddHdr.length);
@@ -321,6 +324,9 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 		} else {
 			this.renditions = new String[] {};
 		}
+	}
 
+	public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
+		this.behaviourFilter = behaviourFilter;
 	}
 }

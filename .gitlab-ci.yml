@@ -3,7 +3,7 @@ stages:
   - deploy
 
 default:
-  image: docker.io/library/maven:3.8.4-openjdk-11
+  image: docker.io/maven:3.9-eclipse-temurin-17
   tags:
     - docker
     - jeci

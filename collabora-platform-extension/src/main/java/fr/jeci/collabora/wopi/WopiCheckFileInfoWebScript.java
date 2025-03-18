@@ -18,6 +18,7 @@ package fr.jeci.collabora.wopi;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AccessStatus;
@@ -37,9 +38,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * https://msdn.microsoft.com/en-us/library/hh622920(v=office.12).aspx search for "optional": false to see mandatory
+ * <a href="https://msdn.microsoft.com/en-us/library/hh622920(v=office.12).aspx">...</a> search for "optional": false to
+ * see mandatory
  * parameters. (As of 29/11/2016 when this was modified, SHA is no longer needed) Also return all values defined here:
- * https://github.com/LibreOffice/online/blob/3ce8c3158a6b9375d4b8ca862ea5b50490af4c35/wsd/Storage.cpp#L403 because LOOL
+ * <a
+ * href="https://github.com/LibreOffice/online/blob/3ce8c3158a6b9375d4b8ca862ea5b50490af4c35/wsd/Storage.cpp#L403">...</a>
+ * because LOOL
  * uses them internally to determine permission on rendering of certain elements. Well I assume given the variable
  * name(s), one should be able to semantically derive their relevance
  */
@@ -47,20 +51,20 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 	private static final String VERSION = "Version";
 	private static final String USER_FRIENDLY_NAME = "UserFriendlyName";
 	private static final String USER_CAN_WRITE = "UserCanWrite";
+	private static final String IS_ADMIN_USER = "isAdminUser";
 	private static final String USER_ID = "UserId";
 	private static final String SIZE = "Size";
 	private static final String OWNER_ID = "OwnerId";
 
 	private static final String BASE_FILE_NAME = "BaseFileName";
 
+    private AuthorityService authorityService;
 	private PermissionService permissionService;
 	private PersonService personService;
 
 	@Override
 	public void executeAsUser(final WebScriptRequest req, final WebScriptResponse res, final NodeRef nodeRef)
 			throws IOException {
-		ensureVersioningEnabled(nodeRef);
-
 		final Map<String, String> model = this.collaboraOnlineService.serverInfo();
 		final Map<QName, Serializable> properties = nodeService.getProperties(nodeRef);
 
@@ -71,6 +75,8 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 			LocalDateTime modifiedDatetime = new LocalDateTime(lastModifiedDate);
 			model.put(LAST_MODIFIED_TIME, ISODateTimeFormat.dateTime().print(modifiedDatetime));
 			model.put(VERSION, currentVersion.getVersionLabel());
+		} else {
+			ensureVersioningEnabled(nodeRef);
 		}
 
 		// BaseFileName need extension, else COL load it in read-only mode
@@ -93,6 +99,8 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 		model.put(USER_ID, userName);
 		model.put(USER_CAN_WRITE, Boolean.toString(userCanWrite(nodeRef)));
 		model.put(USER_FRIENDLY_NAME, userName);
+		boolean isAdmin = authorityService.isAdminAuthority(userName);
+		model.put(IS_ADMIN_USER, Boolean.toString(isAdmin));
 
 		// Add WOPI properties to hide Save As and Export buttons
 		model.put("UserCanNotWriteRelative", "true");
@@ -103,14 +111,25 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 	private void ensureVersioningEnabled(final NodeRef nodeRef) {
 		// Force Versioning
 		if (!nodeService.hasAspect(nodeRef, ContentModel.ASPECT_VERSIONABLE)) {
-			Map<QName, Serializable> initialVersionProps = new HashMap<>(1, 1.0f);
-			versionService.ensureVersioningEnabled(nodeRef, initialVersionProps);
+			Map<QName, Serializable> props = new HashMap<>(1, 1.0f);
+
+			// should auto versioning be requested?
+			props.put(ContentModel.PROP_AUTO_VERSION, true);
+
+			// should auto versioning of properties be requested?
+			props.put(ContentModel.PROP_AUTO_VERSION_PROPS, false);
+
+			versionService.ensureVersioningEnabled(nodeRef, props);
 		}
 	}
 
 	private boolean userCanWrite(final NodeRef nodeRef) {
 		AccessStatus perm = permissionService.hasPermission(nodeRef, PermissionService.WRITE);
 		return AccessStatus.ALLOWED == perm;
+	}
+
+    public void setAuthorityService(AuthorityService authorityService) {
+	    this.authorityService = authorityService;
 	}
 
 	public void setPermissionService(PermissionService permissionService) {

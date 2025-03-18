@@ -23,7 +23,7 @@ import org.joda.time.LocalDateTime;
 
 /**
  * POJO to hold info about a WOPI access token.
- *
+ * <p>
  * Created by seth on 30/04/16.
  */
 public class WOPIAccessTokenInfo implements Serializable {
@@ -46,10 +46,7 @@ public class WOPIAccessTokenInfo implements Serializable {
 	}
 
 	/**
-	 * Return whether the access token has been issued and not expired at the
-	 * current time.
-	 *
-	 * @return
+	 * Return whether the access token has been issued and not expired at the current time.
 	 */
 	public boolean isValid() {
 		return isValid(LocalDateTime.now());
@@ -57,8 +54,6 @@ public class WOPIAccessTokenInfo implements Serializable {
 
 	/**
 	 * Return whether the access token is valid for the given date.
-	 * 
-	 * @return
 	 */
 	public boolean isValid(LocalDateTime when) {
 		return when.isAfter(issuedAt) && when.isBefore(expiresAt);

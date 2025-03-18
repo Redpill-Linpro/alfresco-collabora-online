@@ -65,7 +65,7 @@ public class CollaboraOnlineServiceImplTest {
 
 		List<DiscoveryAction> actions = new ArrayList<>();
 		String urlsrc = PUBLICHOST_SERVER + "/loleaflet/1430151/loleaflet.html?";
-		DiscoveryAction actionOds = wopiDiscovery.new DiscoveryAction("ods", "edit", urlsrc);
+		DiscoveryAction actionOds = new DiscoveryAction("ods", "edit", urlsrc);
 		actions.add(actionOds);
 		when(wopiDiscovery.getAction("ods")).thenReturn(actions);
 		this.collaboraOnlineService.setWopiDiscovery(wopiDiscovery);

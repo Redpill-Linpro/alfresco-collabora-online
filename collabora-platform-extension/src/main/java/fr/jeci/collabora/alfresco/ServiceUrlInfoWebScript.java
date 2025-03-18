@@ -29,12 +29,11 @@ import org.springframework.extensions.webscripts.WebScriptRequest;
 
 /**
  * Don't think this is usefull
- *
  */
 public class ServiceUrlInfoWebScript extends DeclarativeWebScript {
 	private static final String LOOL_HOST_URL = "lool_host_url";
 	private static final String ALFRESCO_SERVICE = "service/";
-	
+
 	protected CollaboraOnlineService collaboraOnlineService;
 
 	@Override
