@@ -164,7 +164,8 @@
                     <indicators>
                         <!-- Being edited by current user -->
                         <indicator id="collabora-editing" index="15" action="document-edit-collabora-online">
-                            <evaluator>evaluator.doclib.indicator.collaboraEditing</evaluator>
+                            <evaluator>evaluator.dk.magenta.doclib.action.isMimetypeEditableLibreOffice</evaluator>
+                            <evaluator>evaluator.doclib.action.allowCollaboraEdit</evaluator>
                         </indicator>
                     </indicators>
                 </config>

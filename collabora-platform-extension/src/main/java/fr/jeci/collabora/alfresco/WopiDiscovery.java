@@ -76,10 +76,6 @@ public class WopiDiscovery {
 		return this.hasCollaboraOnline.get();
 	}
 
-	public void hasCollaboraOnline(boolean online) {
-		this.hasCollaboraOnline.set(online);
-	}
-
 	/**
 	 * Return the srcurl for a given mimetype and action..
 	 * 
@@ -90,7 +86,21 @@ public class WopiDiscovery {
 	 * @return
 	 */
 	public String getSrcURL(String mimeType, String action) {
-		DiscoveryAction discoveryAction = this.legacyActions.get(String.format("%s/%s", mimeType, action));
+		if (action == null) {
+			logger.warn("get srcURL for null action");
+			return null;
+		}
+		if (mimeType == null) {
+			logger.warn("get srcURL for null mimeType");
+			return null;
+		}
+
+		DiscoveryAction discoveryAction = this.legacyActions.get(
+				String.format("%s/%s", mimeType.toLowerCase(), action.toLowerCase()));
+
+		if (discoveryAction == null) {
+			return null;
+		}
 		return discoveryAction.urlsrc;
 	}
 
@@ -99,8 +109,11 @@ public class WopiDiscovery {
 	}
 
 	public List<DiscoveryAction> getAction(String extension) {
-		return this.actions.get(extension);
-	}
+		if (extension == null) {
+			logger.warn("get action for null extension");
+			return Collections.emptyList();
+		}
+		return this.actions.get(extension.toLowerCase());	}
 
 	/**
 	 * Load discovery.xml from Collabora Online server
@@ -112,8 +125,12 @@ public class WopiDiscovery {
 		if (this.discoveryDoc != null) {
 			return;
 		}
-		XMLInputFactory factory = XMLInputFactory.newInstance();
+		final XMLInputFactory factory = XMLInputFactory.newInstance();
 		factory.setProperty(XMLInputFactory.IS_COALESCING, true);
+		// Security - Disable DOCTYPE declarations (Prevent XML External Entity (XXE) attack)
+		factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+		// Security -  Disable external entity declarations  (Prevent XML External Entity (XXE) attack)
+		factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
 
 		XMLStreamReader xr = factory.createXMLStreamReader(in);
 

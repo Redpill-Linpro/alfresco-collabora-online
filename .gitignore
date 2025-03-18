@@ -1,5 +1,5 @@
 **.log*
-
+*.orig
 # Maven
 target/
 pom.xml.tag

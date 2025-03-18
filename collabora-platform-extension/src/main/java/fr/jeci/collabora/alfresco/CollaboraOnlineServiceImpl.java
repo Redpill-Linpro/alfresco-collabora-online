@@ -246,9 +246,9 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 	 * @param action  "view", "edit", etc.
 	 */
 	@Override
-	public String getWopiSrcURL(NodeRef nodeRef, String action) throws IOException {
+	public String getWopiSrcURL(NodeRef nodeRef, String action) {
 		if (!this.wopiDiscovery.hasCollaboraOnline()) {
-			throw new WebScriptException(Status.STATUS_BAD_GATEWAY, "Collabora is Offline");
+			throw new WebScriptException(Status.STATUS_SERVICE_UNAVAILABLE, "Collabora is Offline");
 		}
 
 		final String filename = (String) this.nodeService.getProperty(nodeRef, ContentModel.PROP_NAME);
@@ -262,7 +262,8 @@ public class CollaboraOnlineServiceImpl implements CollaboraOnlineService {
 			final ContentData contentData = (ContentData) nodeService.getProperty(nodeRef, ContentModel.PROP_CONTENT);
 			return this.wopiDiscovery.getSrcURL(contentData.getMimetype(), action);
 		}
-		List<DiscoveryAction> actions = this.wopiDiscovery.getAction(filename.substring(lastDot + 1));
+		String ext = filename.substring(lastDot + 1);
+		List<DiscoveryAction> actions = this.wopiDiscovery.getAction(ext.toLowerCase());
 
 		if (actions == null || actions.isEmpty()) {
 			throw new WebScriptException(Status.STATUS_NOT_IMPLEMENTED,
