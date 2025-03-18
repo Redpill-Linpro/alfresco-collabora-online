@@ -22,6 +22,7 @@ import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
+import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.cmr.version.Version;
 import org.alfresco.service.namespace.QName;
 import org.joda.time.LocalDateTime;
@@ -53,6 +54,7 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 	private static final String BASE_FILE_NAME = "BaseFileName";
 
 	private PermissionService permissionService;
+	private PersonService personService;
 
 	@Override
 	public void executeAsUser(final WebScriptRequest req, final WebScriptResponse res, final NodeRef nodeRef)
@@ -79,13 +81,21 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 		model.put(SIZE, Long.toString(contentData.getSize()));
 
 		String userName = AuthenticationUtil.getRunAsUser();
+		NodeRef user = personService.getPerson(userName);
+		Serializable firstName = nodeService.getProperty(user, ContentModel.PROP_FIRSTNAME);
+		Serializable lastName = nodeService.getProperty(user, ContentModel.PROP_LASTNAME).toString();
+		if(firstName != null && lastName != null) {
+			model.put(USER_FRIENDLY_NAME, firstName.toString() + " " +  lastName.toString());
+		} else {
+			model.put(USER_FRIENDLY_NAME, userName);
+		}
+
 		model.put(USER_ID, userName);
 		model.put(USER_CAN_WRITE, Boolean.toString(userCanWrite(nodeRef)));
 		model.put(USER_FRIENDLY_NAME, userName);
 
 		// Add WOPI properties to hide Save As and Export buttons
-		model.put("HideSaveOption", "true");
-		model.put("HideExportOption", "true");
+		model.put("UserCanNotWriteRelative", "true");
 
 		jsonResponse(res, 200, model);
 	}
@@ -105,5 +115,8 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 
 	public void setPermissionService(PermissionService permissionService) {
 		this.permissionService = permissionService;
+	}
+	public void setPersonService(PersonService personService) {
+		this.personService = personService;
 	}
 }
