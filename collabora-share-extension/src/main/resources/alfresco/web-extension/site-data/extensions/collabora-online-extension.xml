@@ -153,10 +153,10 @@
                     </actions>
                     <actionGroups>
                         <actionGroup id="document-browse">
-                            <action index="199" id="document-edit-collabora-online"/>
+                            <action index="50" id="document-edit-collabora-online"/>
                         </actionGroup>
                         <actionGroup id="document-details">
-                            <action index="339" subgroup="30" id="document-edit-collabora-online"/>
+                            <action index="50" subgroup="30" id="document-edit-collabora-online"/>
                         </actionGroup>
                     </actionGroups>
                 </config>
@@ -164,8 +164,7 @@
                     <indicators>
                         <!-- Being edited by current user -->
                         <indicator id="collabora-editing" index="15" action="document-edit-collabora-online">
-                            <evaluator>evaluator.dk.magenta.doclib.action.isMimetypeEditableLibreOffice</evaluator>
-                            <evaluator>evaluator.doclib.action.allowCollaboraEdit</evaluator>
+                            <evaluator>evaluator.doclib.indicator.collaboraEditing</evaluator>
                         </indicator>
                     </indicators>
                 </config>

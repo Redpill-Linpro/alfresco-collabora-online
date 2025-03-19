@@ -32,6 +32,14 @@ public class AllowCollaboraEditEvaluator extends BaseEvaluator {
         if (nodeRef == null) {
             nodeRef = context.getParameter("nodeRef");
         }
+        // If still not found, try to extract from the JSON model
+        if (nodeRef == null || nodeRef.trim().isEmpty()) {
+            Object nodeObj = jsonObject.get("node");
+            if (nodeObj instanceof JSONObject) {
+                JSONObject node = (JSONObject) nodeObj;
+                nodeRef = (String) node.get("nodeRef");
+            }
+        }
         if (nodeRef == null || nodeRef.trim().isEmpty()) {
             logger.error("No nodeRef parameter found in the request.");
             return false;
