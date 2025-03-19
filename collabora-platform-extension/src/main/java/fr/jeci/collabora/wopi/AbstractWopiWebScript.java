@@ -19,6 +19,7 @@ package fr.jeci.collabora.wopi;
 import fr.jeci.collabora.alfresco.CollaboraOnlineService;
 import fr.jeci.collabora.alfresco.WOPIAccessTokenInfo;
 import net.sf.acegisecurity.Authentication;
+import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.rendition2.RenditionService2;
@@ -193,7 +194,7 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 				// both streams are closed by putContent
 				writer.putContent(new BufferedInputStream(inputStream));
 			} catch (Exception e) {
-				logger.warn("Exception when writing content \"{}\": \"{}\" - will retry", nodeRef, e.getMessage());
+				logger.warn("Exception when writing content \"{}\": \"{}\" - will retry");
 				throw new AlfrescoRuntimeException("Error when writing content - retry", e);
 			} finally {
 				this.behaviourFilter.enableBehaviour(ContentModel.ASPECT_VERSIONABLE);
@@ -208,7 +209,7 @@ public abstract class AbstractWopiWebScript extends AbstractWebScript implements
 				versionProperties.put(CollaboraOnlineService.LOOL_AUTOSAVE, isAutosave);
 				return versionService.createVersion(nodeRef, versionProperties);
 			} catch (Exception e) {
-				logger.warn("Exception when creating version \"{}\": \"{}\" - will retry", nodeRef, e.getMessage());
+				logger.warn("Exception when creating version \"{}\": \"{}\" - will retry");
 				throw new AlfrescoRuntimeException("Error when creating version - retry", e);
 			}
 
