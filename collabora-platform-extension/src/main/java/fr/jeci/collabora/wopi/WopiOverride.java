@@ -12,6 +12,8 @@ public enum WopiOverride {
 	// Refresh Lock
 	REFRESH_LOCK,
 	// Remove Lock
-	UNLOCK
+	UNLOCK,
+	// Rename File
+	RENAME_FILE
 	
 }

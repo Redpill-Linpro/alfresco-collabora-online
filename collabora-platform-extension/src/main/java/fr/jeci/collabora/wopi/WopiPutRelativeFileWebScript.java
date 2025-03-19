@@ -133,6 +133,15 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 		case UNLOCK:
 			currentLockId = this.collaboraOnlineService.lockUnlock(nodeRef, lockId);
 			break;
+		case RENAME_FILE:
+			NodeRef renamedNodeRef = renameFile(req, nodeRef);
+			// Instead of saving file content, just generate a URL for the renamed node.
+			String newUrl = generateUrl(renamedNodeRef);
+			model.put("Url", newUrl);
+			// Optionally return the new name:
+			final Map<QName, Serializable> properties = nodeService.getProperties(renamedNodeRef);
+			model.put("Name", (String) properties.get(ContentModel.PROP_NAME));
+			break;
 		default:
 			break;
 		}
@@ -143,6 +152,32 @@ public class WopiPutRelativeFileWebScript extends AbstractWopiWebScript {
 
 		return model;
 
+	}
+
+	private NodeRef renameFile(WebScriptRequest req, NodeRef nodeRef) {
+		// Get the new file name from the X-WOPI-RequestedName header.
+		String requestedName = req.getHeader("X-WOPI-RequestedName");
+		if (requestedName == null || requestedName.trim().isEmpty()) {
+			throw new WebScriptException(Status.STATUS_BAD_REQUEST, "No new name provided in X-WOPI-RequestedName header.");
+		}
+
+		// Decode the new file name from UTF-7.
+		String newName = Utf7.decode(requestedName, Utf7.UTF7_MODIFIED);
+
+		// Get the current file name to retrieve the extension.
+		String oldName = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_NAME);
+		String extension = "";
+		int idx = oldName.lastIndexOf('.');
+		if (idx != -1) {
+			extension = oldName.substring(idx); // Include the dot.
+		}
+
+		// Combine the new name with the existing extension.
+		String finalName = newName + extension;
+
+		// Rename the node by updating its name property.
+		nodeService.setProperty(nodeRef, ContentModel.PROP_NAME, finalName);
+		return nodeRef;
 	}
 
 	private Map<String, String> saveAs(WebScriptRequest req, NodeRef newNodeRef) {

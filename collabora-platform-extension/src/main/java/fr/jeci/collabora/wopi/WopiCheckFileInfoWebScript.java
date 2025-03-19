@@ -95,6 +95,8 @@ public class WopiCheckFileInfoWebScript extends AbstractWopiWebScript {
 
 		// Add WOPI properties to hide Save As and Export buttons
 		model.put("UserCanNotWriteRelative", "true");
+		model.put("SupportsRename", "true");
+		model.put("UserCanRename", "true");
 
 		jsonResponse(res, 200, model);
 	}
