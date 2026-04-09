@@ -27,7 +27,12 @@ YAHOO.Bubbling.fire("registerAction", {
                             var form = '<form id="loleafletform" name="loleafletform" target="loleafletframe" action="' + frameSrcURL + '" method="post">' +
                                 '<input name="access_token" value="' + encodeURIComponent(access_token) + '" type="hidden"/></form>';
 
-                            var frame = '<iframe id="loleafletframe" name="loleafletframe" allowfullscreen />';
+                            var collaboraOrigin = '';
+                            try {
+                                collaboraOrigin = new URL(frameSrcURL).origin;
+                            } catch (e) {}
+
+                            var frame = '<iframe id="loleafletframe" name="loleafletframe" allow="clipboard-read *; clipboard-write *; fullscreen \'self\' ' + collaboraOrigin + ';" />';
 
                             $('#loolcontainer').remove();
 
